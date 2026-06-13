@@ -1,0 +1,750 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lalis Glow — Catálogo Oficial</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=Jost:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --rosa:      #e8a0a0;
+  --rosa2:     #d4707a;
+  --rosa3:     #f5c6c6;
+  --rosa4:     #fdeef0;
+  --dorado:    #c9973a;
+  --dorado2:   #e8c98a;
+  --crema:     #fdf8f4;
+  --blanco:    #ffffff;
+  --oscuro:    #3a1f22;
+  --gris1:     #f7f0f0;
+  --gris2:     #e8dada;
+  --gris3:     #b09090;
+  --verde:     #5a8a6a;
+  --rojo:      #c0392b;
+  --sombra:    0 8px 32px rgba(180,80,90,0.12);
+  --radio:     16px;
+  --radio-sm:  10px;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'Jost', sans-serif; background: var(--crema); color: var(--oscuro); min-height: 100vh; }
+
+/* ── LOADING ── */
+#loading {
+  position: fixed; inset: 0; background: var(--crema);
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  z-index: 9999; gap: 16px;
+}
+.loading-logo {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 2.2rem; font-weight: 700; color: var(--oscuro);
+}
+.loading-logo span { color: var(--rosa2); font-style: italic; }
+.loading-bar {
+  width: 200px; height: 3px; background: var(--gris2); border-radius: 10px; overflow: hidden;
+}
+.loading-bar-inner {
+  height: 100%; width: 0%; background: linear-gradient(90deg, var(--rosa2), var(--dorado));
+  border-radius: 10px; animation: loadBar 1.5s ease-in-out infinite;
+}
+@keyframes loadBar { 0%{width:0%;margin-left:0} 50%{width:60%;margin-left:20%} 100%{width:0%;margin-left:100%} }
+.loading-txt { font-size: 0.8rem; color: var(--gris3); letter-spacing: 1px; }
+
+/* ── HEADER ── */
+header {
+  background: linear-gradient(135deg, var(--oscuro) 0%, #5a2830 100%);
+  padding: 0 20px;
+  position: sticky; top: 0; z-index: 100;
+  box-shadow: 0 2px 24px rgba(58,31,34,0.35);
+}
+.header-inner {
+  max-width: 1200px; margin: 0 auto;
+  display: flex; align-items: center; justify-content: space-between;
+  height: 66px; gap: 16px;
+}
+.logo { display: flex; flex-direction: column; line-height: 1; }
+.logo-top { font-family: 'Jost', sans-serif; font-size: 0.6rem; font-weight: 600; letter-spacing: 4px; text-transform: uppercase; color: var(--dorado2); margin-bottom: 2px; }
+.logo-main { font-family: 'Cormorant Garamond', serif; font-size: 1.7rem; font-weight: 700; color: var(--blanco); letter-spacing: 1px; }
+.logo-main span { color: var(--rosa3); font-style: italic; }
+.logo-sub { font-size: 0.55rem; font-weight: 400; letter-spacing: 3px; text-transform: uppercase; color: var(--gris3); margin-top: 1px; }
+.cart-btn {
+  background: linear-gradient(135deg, var(--rosa2), var(--dorado));
+  color: var(--blanco); border: none; border-radius: 50px;
+  padding: 9px 18px; font-family: 'Jost', sans-serif; font-weight: 600; font-size: 0.88rem;
+  cursor: pointer; display: flex; align-items: center; gap: 8px;
+  transition: opacity 0.2s, transform 0.1s; white-space: nowrap; flex-shrink: 0;
+  box-shadow: 0 3px 12px rgba(212,112,122,0.4);
+}
+.cart-btn:hover { opacity: 0.92; transform: scale(1.03); }
+.cart-count { background: var(--blanco); color: var(--rosa2); border-radius: 50%; width: 22px; height: 22px; display: flex; align-items: center; justify-content: center; font-size: 0.75rem; font-weight: 700; }
+
+/* ── BANNER ── */
+.banner { background: linear-gradient(160deg, #fdeef0 0%, #fdf3e8 50%, #fdeef0 100%); padding: 36px 20px 28px; text-align: center; border-bottom: 1px solid var(--gris2); position: relative; overflow: hidden; }
+.banner::before { content: '✦'; position: absolute; top: 16px; left: 24px; color: var(--rosa3); font-size: 1.2rem; opacity: 0.6; }
+.banner::after { content: '✦'; position: absolute; bottom: 16px; right: 24px; color: var(--dorado2); font-size: 1rem; opacity: 0.5; }
+.banner-title { font-family: 'Cormorant Garamond', serif; font-size: clamp(2rem, 5vw, 3.2rem); font-weight: 700; color: var(--oscuro); line-height: 1.1; margin-bottom: 6px; }
+.banner-title em { color: var(--rosa2); font-style: italic; }
+.banner-sub { font-size: 0.82rem; font-weight: 400; letter-spacing: 3px; text-transform: uppercase; color: var(--gris3); margin-bottom: 14px; }
+.banner-info { display: flex; align-items: center; justify-content: center; gap: 20px; flex-wrap: wrap; margin-bottom: 10px; }
+.banner-tel { font-family: 'Cormorant Garamond', serif; font-size: 1.1rem; font-weight: 600; color: var(--oscuro); }
+.banner-dir { font-size: 0.75rem; color: var(--gris3); }
+.mayorista-tag { display: inline-flex; align-items: center; gap: 6px; background: linear-gradient(135deg, var(--rosa4), #fff8e8); border: 1px solid var(--rosa3); color: var(--rosa2); border-radius: 50px; padding: 6px 16px; font-size: 0.78rem; font-weight: 500; margin-top: 8px; }
+
+/* ── CONTADOR ── */
+.contador-wrap { background: var(--blanco); border-bottom: 1px solid var(--gris2); padding: 8px 20px; text-align: center; }
+.contador-txt { font-size: 0.75rem; color: var(--gris3); }
+.contador-txt strong { color: var(--rosa2); }
+
+/* ── FILTROS ── */
+.filters-wrap { background: var(--blanco); border-bottom: 1px solid var(--gris2); position: sticky; top: 66px; z-index: 90; }
+.filters { max-width: 1200px; margin: 0 auto; padding: 11px 20px; display: flex; gap: 8px; overflow-x: auto; scrollbar-width: none; }
+.filters::-webkit-scrollbar { display: none; }
+.filter-btn { border: 1.5px solid var(--gris2); background: var(--blanco); color: var(--gris3); border-radius: 50px; padding: 7px 16px; font-family: 'Jost', sans-serif; font-size: 0.8rem; font-weight: 500; cursor: pointer; white-space: nowrap; transition: all 0.18s; display: flex; align-items: center; gap: 6px; }
+.filter-btn:hover { border-color: var(--rosa2); color: var(--rosa2); }
+.filter-btn.active { background: linear-gradient(135deg, var(--rosa2), var(--dorado)); border-color: transparent; color: var(--blanco); box-shadow: 0 2px 10px rgba(212,112,122,0.3); }
+
+/* ── BÚSQUEDA ── */
+.search-wrap { max-width: 1200px; margin: 0 auto; padding: 16px 20px 4px; }
+.search-box { position: relative; }
+.search-box input { width: 100%; border: 1.5px solid var(--gris2); border-radius: 50px; padding: 11px 44px 11px 18px; font-family: 'Jost', sans-serif; font-size: 0.9rem; outline: none; background: var(--blanco); transition: border-color 0.2s; color: var(--oscuro); }
+.search-box input:focus { border-color: var(--rosa2); }
+.search-box .ico { position: absolute; right: 16px; top: 50%; transform: translateY(-50%); color: var(--gris3); }
+
+/* ── GRID ── */
+.grid-wrap { max-width: 1200px; margin: 0 auto; padding: 20px 16px 48px; }
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(185px, 1fr)); gap: 16px; }
+@media(max-width:480px) { .grid { grid-template-columns: repeat(2,1fr); gap: 12px; } }
+
+/* ── CARD ── */
+.card { background: var(--blanco); border-radius: var(--radio); overflow: hidden; cursor: pointer; box-shadow: 0 2px 12px rgba(180,80,90,0.07); transition: transform 0.22s, box-shadow 0.22s; position: relative; }
+.card:hover { transform: translateY(-5px); box-shadow: var(--sombra); }
+.card-img { width: 100%; aspect-ratio: 1; background: var(--gris1); display: flex; align-items: center; justify-content: center; overflow: hidden; position: relative; }
+.card-img img { width:100%; height:100%; object-fit:cover; display:block; }
+.card-img .ph { font-size: 2.8rem; color: var(--gris2); }
+.card-body { padding: 12px; }
+.card-cat { font-size: 0.65rem; font-weight: 600; text-transform: uppercase; letter-spacing: 1.2px; color: var(--rosa2); margin-bottom: 4px; }
+.card-name { font-family: 'Jost', sans-serif; font-size: 0.8rem; font-weight: 600; color: var(--oscuro); line-height: 1.3; margin-bottom: 8px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.card-prices { display: flex; gap: 6px; align-items: baseline; flex-wrap: wrap; }
+.price-d { font-size: 0.92rem; font-weight: 700; color: var(--oscuro); }
+.price-m { font-size: 0.72rem; color: var(--verde); font-weight: 500; }
+.stock-badge { position: absolute; top: 9px; right: 9px; background: rgba(58,31,34,0.72); color: var(--blanco); border-radius: 50px; padding: 3px 9px; font-size: 0.68rem; font-weight: 600; backdrop-filter: blur(4px); }
+.stock-badge.ago { background: rgba(192,57,43,0.82); }
+.nuevo-badge { position: absolute; top: 9px; left: 9px; background: linear-gradient(135deg, var(--dorado), var(--rosa2)); color: var(--blanco); border-radius: 50px; padding: 3px 9px; font-size: 0.66rem; font-weight: 700; }
+.add-btn { width: 100%; margin-top: 10px; background: var(--oscuro); color: var(--blanco); border: none; border-radius: var(--radio-sm); padding: 9px; font-family: 'Jost', sans-serif; font-size: 0.8rem; font-weight: 600; cursor: pointer; transition: background 0.18s; }
+.add-btn:hover { background: #5a2830; }
+.add-btn:disabled { background: var(--gris2); color: var(--gris3); cursor: not-allowed; }
+
+/* ── MODAL PRODUCTO ── */
+.overlay { display: none; position: fixed; inset: 0; background: rgba(58,31,34,0.65); z-index: 200; backdrop-filter: blur(5px); align-items: flex-end; justify-content: center; }
+.overlay.open { display: flex; }
+@media(min-width:600px) { .overlay { align-items: center; } }
+.modal { background: var(--blanco); border-radius: 24px 24px 0 0; width: 100%; max-width: 520px; max-height: 92vh; overflow-y: auto; padding: 0 0 32px; animation: slideUp 0.28s cubic-bezier(.32,.72,0,1); }
+@media(min-width:600px) { .modal { border-radius: 24px; max-height: 88vh; } }
+@keyframes slideUp { from { transform: translateY(60px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+.modal-img-wrap { width: 100%; aspect-ratio: 1; background: var(--gris1); overflow: hidden; position: relative; }
+.modal-img-wrap img { width:100%; height:100%; object-fit:cover; }
+.modal-img-ph { width:100%; height:100%; display:flex; align-items:center; justify-content:center; font-size:5rem; color:var(--gris2); }
+.modal-close { position: absolute; top: 14px; right: 14px; background: rgba(255,255,255,0.92); border: none; border-radius: 50%; width: 36px; height: 36px; font-size: 1rem; cursor: pointer; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 8px rgba(0,0,0,0.12); }
+.modal-body { padding: 20px 20px 0; }
+.modal-cat { font-size: 0.7rem; font-weight: 600; text-transform: uppercase; letter-spacing: 1.5px; color: var(--rosa2); margin-bottom: 5px; }
+.modal-name { font-family: 'Cormorant Garamond', serif; font-size: 1.3rem; font-weight: 600; color: var(--oscuro); line-height: 1.3; margin-bottom: 14px; }
+.modal-prices { background: var(--gris1); border-radius: var(--radio-sm); padding: 14px; display: flex; gap: 24px; margin-bottom: 16px; }
+.price-block { display: flex; flex-direction: column; gap: 2px; }
+.price-lbl { font-size: 0.68rem; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; color: var(--gris3); }
+.price-val { font-size: 1.1rem; font-weight: 700; color: var(--oscuro); }
+.price-val.mv { color: var(--verde); }
+.mayor-note { font-size: 0.7rem; color: var(--verde); font-weight: 500; margin-top: 2px; }
+.var-section { margin-bottom: 16px; }
+.var-lbl { font-size: 0.76rem; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; color: var(--gris3); margin-bottom: 10px; }
+.var-grid { display: flex; gap: 8px; flex-wrap: wrap; }
+.var-thumb { width: 54px; height: 54px; border-radius: 10px; overflow: hidden; border: 2.5px solid transparent; cursor: pointer; background: var(--gris1); transition: border-color 0.15s; flex-shrink: 0; }
+.var-thumb img { width:100%; height:100%; object-fit:cover; display:block; }
+.var-thumb.sel { border-color: var(--rosa2); }
+.var-thumb .vph { width:100%; height:100%; display:flex; align-items:center; justify-content:center; font-size:1.3rem; }
+.qty-row { display: flex; align-items: center; gap: 14px; margin-bottom: 18px; }
+.qty-lbl { font-size: 0.82rem; font-weight: 600; color: var(--oscuro); }
+.qty-ctrl { display: flex; align-items: center; gap: 2px; }
+.qty-btn { background: var(--gris1); border: none; border-radius: 8px; width: 36px; height: 36px; font-size: 1.1rem; cursor: pointer; font-weight: 700; color: var(--oscuro); transition: background 0.15s; }
+.qty-btn:hover { background: var(--gris2); }
+.qty-num { width: 42px; text-align: center; font-size: 1rem; font-weight: 700; color: var(--oscuro); }
+.mayor-hint { font-size: 0.74rem; color: var(--verde); font-weight: 500; background: #eaf6f0; border-radius: 6px; padding: 4px 10px; }
+.add-cart-btn { width: 100%; background: linear-gradient(135deg, var(--oscuro), #5a2830); color: var(--blanco); border: none; border-radius: var(--radio-sm); padding: 15px; font-family: 'Jost', sans-serif; font-size: 1rem; font-weight: 600; cursor: pointer; transition: opacity 0.18s, transform 0.1s; display: flex; align-items: center; justify-content: center; gap: 8px; box-shadow: 0 3px 14px rgba(58,31,34,0.25); }
+.add-cart-btn:hover { opacity: 0.9; transform: scale(1.01); }
+.add-cart-btn:disabled { background: var(--gris2); color: var(--gris3); cursor: not-allowed; transform: none; box-shadow: none; }
+.guia-sec { margin-top: 14px; border-top: 1px solid var(--gris2); padding-top: 14px; }
+.guia-sec p { font-size: 0.72rem; color: var(--gris3); margin-bottom: 8px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; }
+.guia-sec img { width: 100%; border-radius: 10px; }
+
+/* ── CARRITO ── */
+.cart-overlay { display:none; position:fixed; inset:0; background:rgba(58,31,34,0.55); z-index:300; backdrop-filter:blur(3px); }
+.cart-overlay.open { display:block; }
+.cart-panel { position: fixed; top: 0; right: -100%; width: min(400px,100vw); height: 100vh; background: var(--blanco); z-index: 310; display: flex; flex-direction: column; transition: right 0.28s cubic-bezier(.32,.72,0,1); box-shadow: -8px 0 40px rgba(58,31,34,0.2); }
+.cart-panel.open { right: 0; }
+.cart-hdr { background: linear-gradient(135deg, var(--oscuro), #5a2830); color: var(--blanco); padding: 18px 20px; display: flex; align-items: center; justify-content: space-between; }
+.cart-hdr h2 { font-family: 'Cormorant Garamond', serif; font-size: 1.15rem; color: var(--rosa3); }
+.cart-cls { background: none; border: none; color: var(--blanco); font-size: 1.3rem; cursor: pointer; }
+.cart-items { flex: 1; overflow-y: auto; padding: 16px; display: flex; flex-direction: column; gap: 12px; }
+.cart-empty { text-align: center; padding: 40px 20px; color: var(--gris3); }
+.cart-empty .ico { font-size: 3rem; margin-bottom: 10px; }
+.ci { display: flex; gap: 12px; align-items: flex-start; background: var(--gris1); border-radius: var(--radio-sm); padding: 12px; }
+.ci img { width: 52px; height: 52px; border-radius: 8px; object-fit: cover; background: var(--gris2); flex-shrink: 0; }
+.ci-info { flex: 1; min-width: 0; }
+.ci-name { font-size: 0.78rem; font-weight: 600; color: var(--oscuro); line-height: 1.3; margin-bottom: 2px; }
+.ci-var { font-size: 0.7rem; color: var(--gris3); margin-bottom: 6px; }
+.ci-row { display: flex; align-items: center; gap: 8px; }
+.ci-qb { background: var(--blanco); border: 1px solid var(--gris2); border-radius: 6px; width: 26px; height: 26px; cursor: pointer; font-weight: 700; font-size: 0.9rem; display: flex; align-items: center; justify-content: center; }
+.ci-q { font-size: 0.85rem; font-weight: 700; color: var(--oscuro); min-width: 20px; text-align: center; }
+.ci-p { font-size: 0.85rem; font-weight: 700; color: var(--oscuro); white-space: nowrap; }
+.ci-del { background: none; border: none; color: var(--rojo); cursor: pointer; font-size: 1rem; padding: 2px; }
+.ci-may { font-size: 0.66rem; color: var(--verde); font-weight: 600; background: #eaf6f0; border-radius: 4px; padding: 2px 6px; }
+.cart-ftr { padding: 16px; border-top: 1px solid var(--gris2); }
+.cart-tot-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
+.cart-tot-lbl { font-size: 0.82rem; color: var(--gris3); }
+.cart-tot-val { font-size: 1.2rem; font-weight: 700; color: var(--oscuro); }
+.cart-cnt { font-size: 0.76rem; color: var(--verde); font-weight: 500; }
+.wa-btn { width: 100%; margin-top: 12px; background: #25D366; color: var(--blanco); border: none; border-radius: var(--radio-sm); padding: 15px; font-family: 'Jost', sans-serif; font-size: 0.95rem; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; transition: background 0.18s; box-shadow: 0 3px 12px rgba(37,211,102,0.3); }
+.wa-btn:hover { background: #1eb854; }
+.wa-btn:disabled { background: var(--gris2); color: var(--gris3); cursor: not-allowed; box-shadow: none; }
+
+/* ── FORMULARIO ── */
+.form-ov { display: none; position: fixed; inset: 0; background: rgba(58,31,34,0.75); z-index: 400; backdrop-filter: blur(6px); align-items: center; justify-content: center; padding: 20px; }
+.form-ov.open { display: flex; }
+.form-modal { background: var(--blanco); border-radius: 20px; width: 100%; max-width: 440px; padding: 28px 24px; animation: fadeScale 0.22s ease; }
+@keyframes fadeScale { from { transform: scale(0.95); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+.form-modal h2 { font-family: 'Cormorant Garamond', serif; color: var(--oscuro); font-size: 1.4rem; margin-bottom: 4px; }
+.form-modal p { color: var(--gris3); font-size: 0.82rem; margin-bottom: 20px; }
+.fg { margin-bottom: 13px; }
+.fg label { display: block; font-size: 0.74rem; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; color: var(--oscuro); margin-bottom: 5px; }
+.fg input, .fg select { width: 100%; border: 1.5px solid var(--gris2); border-radius: var(--radio-sm); padding: 10px 13px; font-family: 'Jost', sans-serif; font-size: 0.9rem; outline: none; transition: border-color 0.2s; background: var(--blanco); color: var(--oscuro); }
+.fg input:focus, .fg select:focus { border-color: var(--rosa2); }
+.form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.send-btn { width: 100%; margin-top: 8px; background: #25D366; color: var(--blanco); border: none; border-radius: var(--radio-sm); padding: 14px; font-family: 'Jost', sans-serif; font-size: 0.95rem; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; transition: background 0.18s; }
+.send-btn:hover { background: #1eb854; }
+.cancel-btn { width: 100%; margin-top: 8px; background: none; color: var(--gris3); border: 1.5px solid var(--gris2); border-radius: var(--radio-sm); padding: 10px; font-family: 'Jost', sans-serif; font-size: 0.84rem; font-weight: 500; cursor: pointer; transition: border-color 0.18s; }
+.cancel-btn:hover { border-color: var(--rosa2); color: var(--rosa2); }
+
+/* ── TOAST ── */
+.toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(80px); background: var(--oscuro); color: var(--blanco); border-radius: 50px; padding: 12px 24px; font-size: 0.86rem; font-weight: 500; z-index: 500; pointer-events: none; transition: transform 0.28s cubic-bezier(.32,.72,0,1), opacity 0.28s; opacity: 0; white-space: nowrap; box-shadow: 0 4px 20px rgba(58,31,34,0.3); }
+.toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
+.no-res { text-align: center; padding: 60px 20px; color: var(--gris3); }
+.no-res .ico { font-size: 3rem; margin-bottom: 12px; }
+.load-more-wrap { text-align: center; padding: 20px; }
+.load-more-btn { background: var(--oscuro); color: var(--blanco); border: none; border-radius: 50px; padding: 12px 32px; font-family: 'Jost', sans-serif; font-size: 0.88rem; font-weight: 600; cursor: pointer; transition: background 0.18s; }
+.load-more-btn:hover { background: #5a2830; }
+
+/* ── ERROR ── */
+.error-box { text-align: center; padding: 60px 20px; color: var(--gris3); }
+.error-box .ico { font-size: 3rem; margin-bottom: 12px; }
+.error-box p { font-size: 0.9rem; margin-bottom: 16px; }
+.error-box button { background: var(--rosa2); color: white; border: none; border-radius: 50px; padding: 10px 24px; font-family: 'Jost', sans-serif; font-size: 0.88rem; font-weight: 600; cursor: pointer; }
+</style>
+</head>
+<body>
+
+<!-- PANTALLA DE CARGA -->
+<div id="loading">
+  <div class="loading-logo">Lalis <span>Glow</span></div>
+  <div class="loading-bar"><div class="loading-bar-inner"></div></div>
+  <div class="loading-txt">Cargando productos actualizados...</div>
+</div>
+
+<header>
+  <div class="header-inner">
+    <div class="logo">
+      <span class="logo-top">Catálogo Oficial</span>
+      <div class="logo-main">Lalis <span>Glow</span></div>
+      <span class="logo-sub">Splash · Cremas · Maquillaje</span>
+    </div>
+    <button class="cart-btn" onclick="openCart()">
+      🛒 Carrito
+      <span class="cart-count" id="cartCount">0</span>
+    </button>
+  </div>
+</header>
+
+<div class="banner">
+  <div class="banner-title">Nuestros <em>Productos</em></div>
+  <div class="banner-sub">Maquillaje · Fragancias · Relojes · Cuidado Personal · Accesorios</div>
+  <div class="banner-info">
+    <span class="banner-tel">📞 322 611 4222</span>
+    <span class="banner-dir">Cra 55 #46-40 · CC Cúcuta Tenerife · Local 107</span>
+  </div>
+  <div class="mayorista-tag">🏷️ A partir de 6 productos distintos, precio mayorista automático</div>
+</div>
+
+<div class="contador-wrap">
+  <div class="contador-txt">Catálogo actualizado en tiempo real · <strong id="totalProductos">...</strong> productos disponibles</div>
+</div>
+
+<div class="filters-wrap">
+  <div class="filters">
+    <button class="filter-btn active" onclick="setFilter('TODOS',this)">✨ Todos</button>
+    <button class="filter-btn" onclick="setFilter('MAQUILLAJE',this)">💄 Maquillaje</button>
+    <button class="filter-btn" onclick="setFilter('FRAGANCIAS',this)">🌸 Fragancias</button>
+    <button class="filter-btn" onclick="setFilter('RELOJES',this)">⌚ Relojes</button>
+    <button class="filter-btn" onclick="setFilter('CUIDADO PERSONAL',this)">🧴 Cuidado Personal</button>
+    <button class="filter-btn" onclick="setFilter('ACCESORIOS',this)">👜 Accesorios</button>
+  </div>
+</div>
+
+<div class="search-wrap">
+  <div class="search-box">
+    <input type="text" id="searchInput" placeholder="Buscar producto..." oninput="renderGrid()">
+    <span class="ico">🔍</span>
+  </div>
+</div>
+
+<div class="grid-wrap">
+  <div class="grid" id="grid"></div>
+  <div class="no-res" id="noRes" style="display:none"><div class="ico">🔍</div><p>No encontramos ese producto.</p></div>
+  <div class="error-box" id="errorBox" style="display:none">
+    <div class="ico">⚠️</div>
+    <p>No se pudieron cargar los productos.<br>Verifica tu conexión a internet.</p>
+    <button onclick="cargarDatos()">Reintentar</button>
+  </div>
+  <div class="load-more-wrap" id="loadWrap" style="display:none">
+    <button class="load-more-btn" onclick="loadMore()">Ver más productos</button>
+  </div>
+</div>
+
+<!-- MODAL PRODUCTO -->
+<div class="overlay" id="overlay" onclick="closeMO(event)">
+  <div class="modal">
+    <div class="modal-img-wrap">
+      <img id="mImg" src="" alt="" onerror="this.style.display='none';document.getElementById('mPh').style.display='flex'">
+      <div id="mPh" class="modal-img-ph" style="display:none">💄</div>
+      <button class="modal-close" onclick="closeModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="modal-cat" id="mCat"></div>
+      <div class="modal-name" id="mName"></div>
+      <div class="modal-prices">
+        <div class="price-block">
+          <div class="price-lbl">Precio Detal</div>
+          <div class="price-val" id="mDetal"></div>
+        </div>
+        <div class="price-block">
+          <div class="price-lbl">Precio Mayorista</div>
+          <div class="price-val mv" id="mMayor"></div>
+          <div class="mayor-note">Desde 6 productos</div>
+        </div>
+      </div>
+      <div class="var-section" id="varSec">
+        <div class="var-lbl">Selecciona estilo</div>
+        <div class="var-grid" id="varGrid"></div>
+      </div>
+      <div class="qty-row">
+        <div class="qty-lbl">Cantidad</div>
+        <div class="qty-ctrl">
+          <button class="qty-btn" onclick="chgQty(-1)">−</button>
+          <div class="qty-num" id="mQty">1</div>
+          <button class="qty-btn" onclick="chgQty(1)">+</button>
+        </div>
+        <div class="mayor-hint" id="mHint" style="display:none">¡Precio mayorista!</div>
+      </div>
+      <button class="add-cart-btn" id="addBtn" onclick="addToCart()">🛒 Agregar al carrito</button>
+      <div class="guia-sec" id="guiaSec" style="display:none">
+        <p>Guía de cuidado</p>
+        <img id="guiaImg" src="" alt="Guía de cuidado" onerror="document.getElementById('guiaSec').style.display='none'">
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- CARRITO -->
+<div class="cart-overlay" id="cartOv" onclick="closeCOv(event)"></div>
+<div class="cart-panel" id="cartPanel">
+  <div class="cart-hdr">
+    <h2>🛒 Tu Carrito</h2>
+    <button class="cart-cls" onclick="closeCart()">✕</button>
+  </div>
+  <div class="cart-items" id="cartItems"></div>
+  <div class="cart-ftr">
+    <div class="cart-tot-row">
+      <span class="cart-tot-lbl">Total estimado</span>
+      <span class="cart-tot-val" id="cartTot">$0</span>
+    </div>
+    <div class="cart-cnt" id="cartCnt"></div>
+    <button class="wa-btn" id="waBtn" onclick="openForm()" disabled>
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+      Enviar pedido por WhatsApp
+    </button>
+  </div>
+</div>
+
+<!-- FORMULARIO -->
+<div class="form-ov" id="formOv">
+  <div class="form-modal">
+    <h2>📋 Datos del pedido</h2>
+    <p>Ingresa tus datos para que podamos confirmar tu pedido.</p>
+    <div class="form-row">
+      <div class="fg"><label>Nombre *</label><input type="text" id="cNom" placeholder="Tu nombre"></div>
+      <div class="fg"><label>Apellido</label><input type="text" id="cApe" placeholder="Tu apellido"></div>
+    </div>
+    <div class="fg"><label>WhatsApp *</label><input type="tel" id="cTel" placeholder="300 000 0000"></div>
+    <div class="fg"><label>Ciudad</label><input type="text" id="cCiu" placeholder="Ciudad de entrega"></div>
+    <div class="fg">
+      <label>Tipo de cliente</label>
+      <select id="cTipo">
+        <option value="DETAL">Detal (compra individual)</option>
+        <option value="MAYORISTA">Mayorista (6+ productos)</option>
+      </select>
+    </div>
+    <div class="fg"><label>Notas adicionales</label><input type="text" id="cNot" placeholder="Color preferido, indicaciones..."></div>
+    <button class="send-btn" onclick="sendWA()">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+      Confirmar y enviar por WhatsApp
+    </button>
+    <button class="cancel-btn" onclick="closeForm()">Cancelar</button>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const WA_NUMBER = '573226114222';
+
+// ── URL DEL CSV DE GOOGLE SHEETS (CATALOGO) ──
+const CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTgWOSg5Ub4wdTTxW0Qlu7R6omDRWllHuUvjNiBgOoCZrefBjjAvKongWEYnd5BuS8B3aoYY5Hf8BGb/pub?gid=1229897467&single=true&output=csv';
+
+// ── IMÁGENES desde el HTML anterior (para productos con variantes) ──
+// Las imágenes se construyen desde la columna IMAGEN del catálogo
+// Formato: CATALOGO/NOMBRE_PRODUCTO.png → se convierte a URL de Drive
+
+let PRODUCTOS = [];
+let carrito = [], filtro = 'TODOS', busq = '', prodActual = null, varActual = 0, cantActual = 1, pag = 0;
+const POR_PAG = 32;
+const fmt = n => '$' + Math.round(n).toLocaleString('es-CO');
+const totalDif = () => carrito.length;
+const esMay = () => totalDif() >= 6;
+const precioItem = i => esMay() ? i.mayor : i.detal;
+const totalCart = () => carrito.reduce((s,i) => s + precioItem(i)*i.cantidad, 0);
+
+// ── PARSEAR CSV ──
+function parsearCSV(texto) {
+  const lineas = texto.split('\n');
+  const productos = [];
+  // Columnas: #, REFERENCIA, PRODUCTO, PRECIO DETAL, PRECIO MAYORISTA, CANT. DISPONIBLE, CATEGORÍA, GUIA_CUIDADO
+  for (let i = 1; i < lineas.length; i++) {
+    const cols = parsearLineaCSV(lineas[i]);
+    if (!cols || cols.length < 6) continue;
+    const ref = (cols[1] || '').trim();
+    const nombre = (cols[2] || '').trim();
+    const detal = parseFloat((cols[3] || '0').replace(/[^0-9.]/g,'')) || 0;
+    const mayor = parseFloat((cols[4] || '0').replace(/[^0-9.]/g,'')) || 0;
+    const cant = parseInt((cols[5] || '0').replace(/[^0-9-]/g,'')) || 0;
+    const categoria = (cols[6] || 'GENERAL').trim().toUpperCase();
+    const guia = (cols[7] || '').trim();
+
+    if (!ref || !nombre) continue;
+
+    // Construir imagen: buscar en el mapa de imágenes o usar placeholder
+    const imagen = obtenerImagen(ref, nombre);
+
+    productos.push({
+      ref: ref,
+      nombre: nombre,
+      cant: cant,
+      detal: detal,
+      mayor: mayor,
+      categoria: categoria,
+      guia: guia,
+      variantes: [{ variante: 'Principal', imagen: imagen }]
+    });
+  }
+  return productos;
+}
+
+function parsearLineaCSV(linea) {
+  const resultado = [];
+  let dentro = false, campo = '';
+  for (let i = 0; i < linea.length; i++) {
+    const c = linea[i];
+    if (c === '"') { dentro = !dentro; }
+    else if (c === ',' && !dentro) { resultado.push(campo); campo = ''; }
+    else { campo += c; }
+  }
+  resultado.push(campo);
+  return resultado;
+}
+
+// ── MAPA DE IMÁGENES (del catálogo original con IDs de Drive) ──
+const IMAGENES = {
+  "ABANICO":"1UXlEuBDjET9bIny-HcdJiv4Cbeeb4BHA","ACONDICIONADORSYVPA":"1D5mPN09-tmxHvMkt8TIE5pmlefWwueQ2","BASECF37":"1nO-qg5b3nQ4HH7K-m_Q-4cTlaZeAUr_y","BASECR":"1AFM-7rqsCsnYQDceAODoO89aPrhsnzT8","BASEBKB":"1x5adk-8z6qWLF_F49Urk3NERX-Ox0Ra-","BASEKLM":"1PAQrhtS0leLa6ocNJ2_Ck6Pa8wldPWcY","BASEKSE":"1afLNY4JQoqAQm80uTeZlChjBchsEzxPu","BASERF":"1ZsOST5DaCQNqBRs2xkwH4wzNAJ9GMDaW","POMOATRI":"1u4XCBw3d0JxAXO64UfkrM1I-j9etmFxA","BRILLO2U":"1W80x6vK_RXrhGpF-Q4K1_h-chmj48IrY","BRILLOCB":"1lBS3zPmNQNjurwVnaT_BiLDf3Mz9eSkt","BRILLOC":"11WumMZa3saJkqHfVdSdWoC7UbU6a0hdY","BRILLOHFR":"13hVPo6F3DYAmP3X7CbpVZGRxLUkULd0o","BRILLOLLA":"1EBmZoSGLHfqL6OR9tOBqbs1S_zRoohYX","BRILLOM14K":"1t1A7fZaVtwbW17fjsb_cttfbeSPtM7Lp","BRILLOMB":"1LKKRC-mwpMhlYr3WUoPoew5R2--YpJad","BRILLOMTD":"1FT0-dc1JTseIXBGnoXbIy8MeV6Yfp2s0","BRILLOMBB":"1u6PMBIWCxkzdtxaDh9bIwdRmQZzPI_ov","BRILLOP":"1CqaDoA1e_EVX3vks31vCwdAs-eSTAhpa","BROCHA":"1LSwrH7HUaKJxExZcAEsueQ1CSnL9Bnyz","BROCHASIR":"1XVU8tmyIENK37ODHw-J87t_gczbHL4La","CHAMPUB30":"1fu2tw4weBL3EMcPCmJTAo2IhtKmWBNCx","CILINDRO250":"1jSYJ7iUMaR2fTTirTzcsstbca6e8WIno","COLAGENODL":"1kKXe3ISdYqTwAogZ_Ap8kKnHk-nghlhr","COLAGENOOJ":"1N7Ti6F1noEkpX-NoDYfiKgUenDUDstNb","CORRECTORBA":"1E3kVbjtgdfxetCNToiQ8SzKDDiWW0SIT","CORRECTCTOR":"1EdYlmecuoIyHbtWrUdCDwOVFnc8mAIJ1","COSMETIQUERAF":"1YCFZzKrdkmwJKWSxvAUOCuzIU_8uvbte","COSMETIQUERAS":"1nrUxX8qKx4wvjpfjXYhdOEJM4SAeTAcb","CREMAD&M130":"1s2Wx6P7jwwrEKd46roqAq8cqgI8de7xB","CREMAMB30":"1LUfsVz6leItrFp2iBLWxt6wF6rc4n4tt","CREMAMHFB30":"1Go6y3Wa3sMr0hoY4wrMzpp8TtD3pNRFN","DELINEADORLC":"1BsGUOXY9-8IS4HOMnbVXmx6p0qcnLak0","DELINEADORLDP":"1EJpRLZi3hAKuuUZe6JH-rbjljjAdUEfs","DELINEADORLE":"1YoW0r1QtHPbV3Njdx67dubFsPIq11Sls","DELINEADORW":"1vygEp0ESK8IxoUtVth6Jpz5nw-DMxWeP","DELINEADOR4PC":"1u2Yv3ON7o7ejBgDponfGgI44-Cy_Salc","ENCRESPADOR":"1O621UtLzXxH-rU5WM-O63TW3Qt9HI-Cu","ENCRESPADORS":"1eaeuCGKl52_LcNmr7PKDyxzdLkBFSzGm","ESTUCHED&M":"1mdC743UFMF1TIIzzliZr4gBcvqOSPGNR","FIJADORMKBCB":"1q36Dh3kX8BGCPKJpfrXjzDgvtcIz40U9","FIJADORMKBC":"1X7sQZrelwNL52lkCRIZK2vEPz7DukEmu","BRILLOHF":"10te2gdil14BDi0k8N5_1Y9r7NsZdfVoe","HIDRATANTELA":"1_ZRF5nxHzZwH_m8PWUonx6Id_sHxzN8f","BRILLOHLF":"1ZkiE1VUQoPSOJt6MRhDZOBeGw8qylaVi","BRILLOFH":"1fSiIQEF6FHwpW9fcfckXH5u8JOhLPlHY","ILUMINADORDT":"12Ow1OtOWlHUIrTVQdI1luKVUAsZm0b89","ILUMINADORRC":"1G4hAt2XDJ12f-UtwR600_jXP58XB0_LG","KITX2SC":"1mNmnZsUkTK-nHrLuuFALYoIQvV6gLW03","KITX3DYC":"1PLkIeoUoK2TsJOOubT25W_vRgGkb8pi7","KITX4P100":"14dA_btg-wGf3wyUnpZcya4_fzeKe6tzo","CREMAB305":"1yfdQ1LDBfHC3lbl6n2bk7CZRqPutrjAE","LABIAL+H":"1IOe_mbPAog0wsz68RHRbDvX2RqiTa3GC","LABIALC":"1H1keJJzNN36bl77Jlcal8aO0byKcuAmC","BRILLOLLE":"18vo0pEH_4sk7GQdlGwY-cFSsI_CrEiD3","LABIALM":"128ktQGKllZFxuK0NkfEtOzypEYnbcvM1","LABIALT":"1IY5in1oMgRcs-uEfj-5lGgQNHWlFKG7A","LAPIZ3PB":"1QySW7HdLxX-dXVQ2PPyQiwXY92cD29U5","LABIALLDPB":"1JcAYlsQ9i4kRDpSU-Rf6MQk8JfiqNfp1","BILLOLGM":"1okVxYYhOuGeqlCcehSYYkbephm3dQWQt","LOCIONARA100":"1yoAxcY7xNADgMdy1OG5PRSLLDbaXIZ8l","LOCIONDYC25Y30":"1yqG2tJf53q5QPDiVCBsfmV_Qrwz6MefO","LOCIONDYC35":"1c_F6YPGfFwftHUfiRsLAhAfx9vXKAyIv","LOCIONDYC100":"1YYgKg3RWs3kLqaBFR0I0LjTwJm8-HpT5","LOCIONTUBO125":"1ZVfx__JZU0NWfjawhBe-kwCSUdh9NRDS","MANTEQUILLABLU15":"1wu3vWMLSUZWt8kxacaRm8cygkIBh6C1K","MANTEQUILLAD&M":"1AYj5Gf1o5dKmkZ3hr0d6xtb2Kos0-VxY","PALETACON":"1p8oTTjZRwklZoTAzIGn2UPJUJzmMo2aQ","PALETAMR":"1rRyrzv-Kq41mfI5tiLOjmS3De4MCOQ4t","PAPELA":"1o0Z-b7HqOt4s_7dNYXDJjwqNWy-ob6Nt","PERFUARA100":"1ZCuv3_nhkoIk1YLJa9_QXa5_hf8FMf7c","PERFD50":"18ga-yQE168R-Lz2BvchhSeMm8A9i_TxZ","PERFUN@50":"1NBN7OXYu77uMLSvt3yMRZjBoV9DXqUn-","PESTAÑINA2E1GB":"1eYIDs815H4L_QTyYHzXoDd7NR1Es3X9G","PESTAÑINAMR":"14hVughohzYh1MqbOu83HnVmowrQxdcbU","PESTAÑINARC":"1kwodAwtPP5BtA9Vn8cpvmCzgYqjc8_8r","PESTAÑINATKB":"1guzdS-Ev9B9d9kAuWNkN1eA5HhpP84ao","PESTAÑINATAYH":"1IHYzV5Ix9xIhim1pCIn7pTm2NmDUX7Kf","PEZONERAX5":"14-wwTEgtk7aAdoY-acf3tqri8EKfTZDw","PEZONERAXP":"1z56f-FiNr8ZxqMC-MMB6snYZkVq1JVrh","POLVOBP":"1AULfnPKyWMRtfnLati1kVr4EES5ZezvO","POLVOB85G":"13N-ExgOePsP7Vb-YLjvna-9tgIlkh0bh","POLVOC":"19bx7mMljEOXb9xL59DATX-3mdQoTFbON","POLVOCKT":"1qYuJwTvMIN_24fvZLlRSHanJihtlSn40","POLVOCMR":"1EQAlvtAg3Z_37TPPXhbxGex1wqr7bVVa","POMOAP":"12_lP_ilBLhclhqje0IgVy2h-kxCfdyih","POMOB":"1vRvmZ7xhdT0KMjdbzZdNk-E337vC7AGJ","POMOBR":"1O_LvchhVhS9y4ZayclwcI_sAEPW76nmy","POMOPP":"1wsCROCMaqyFhfSQa-XUqDJyYKzZVC2eP","PRIMERFM":"1zHU4MlKJSGc88y5qVNqjZugXCx3Z1hu3","PROTECTORS40":"15A_-1SOl53lUUEr-xYoiO8HlcFVcbGq-","RUBORBKB":"1kbmnD2_AmJpE_gW1q9t3eGT380hIXhES","RUBORBG":"1AxHmLAiNGNwtuLD_wuMBtL24EWhePrjP","RUBORBPTT":"1IFvGX2OxrpYH4JEHKvRUKJeP-cl1DGRF","SACAPUNT":"1YM5ErxQq2TA3kZjlQX0Oodvp1PX8_UWQ","SETX2PDYC":"1oPO87R4tLqakyeoFa9AGAH3dISskxCIv","SOMBRANFD":"1IXBsS8iGUQzYBlxdiCXaR1IVq9809rqp","SOMBRANDE":"1OyXgw1i7llQ8vUE57AVDIPVWi6CMlbAN","SOMBRAU":"1h7u0M_U3pT5nV5rWpaQxGsO2j1Gs9qy7","SPLASHC250":"1yzgARsLOKO_4XYzO7RAUSFqsfTWqVcf-","SPLASHCIN75":"18HOk0bHVgk3erz-AUjo5AvGBkQzZOpQ2","SPLASHD&M":"1Jb3NrSCGHH843phCbfDg2FQumaKziy0u","SPLASHN200":"1u5ql-H7soV7-rDYWGVhG40JVcgPZmnze","SPLASSOL240":"1_PmXsCFUyD6QtEYdf2PMtPDteb-141HG","SPLASSOL90":"1ka4KT4V4dKyIpolDP_wOpcxBotTonTrS","SPLASHTD":"1nmk_Da0mPmSWXN8ZOwSS_mSXzQxtMuIq","PERFC40":"12d0P6p_ip9EiNhr1nwTGQgFDE6Tqk5ir","TINTACB":"1k6iS8vudaAe-2oonpmJbABdUp16DFIhk","TINTALKB":"1bNy3oSc_kCzt8LSp7dOdlmBO2suxExFY","TINTALMB":"1v_S_BT4C0r6JK4r6nvo-HqKDQQ0BPukb","TINTAVB":"1pXetL4dX6kKnCJvkCYYFPMemjeMdvbJA","TOALLAPC":"1h6fh1tR7C-K8edC-ILyJgHGI5jCzOszw","UÑASD":"1WVj6x7MQ8PlR3uwL1chRAimAMjkf_8KK"
+};
+
+function obtenerImagen(ref, nombre) {
+  if (IMAGENES[ref]) {
+    return 'https://drive.google.com/thumbnail?sz=w500&id=' + IMAGENES[ref];
+  }
+  // Para productos nuevos: intentar construir URL desde carpeta CATALOGO
+  return 'CATALOGO/' + nombre + '.png';
+}
+
+// ── CARGAR DATOS DESDE GOOGLE SHEETS ──
+const PROXIES = [
+  url => 'https://api.allorigins.win/raw?url=' + encodeURIComponent(url),
+  url => 'https://corsproxy.io/?' + encodeURIComponent(url),
+  url => 'https://cors-anywhere.herokuapp.com/' + url,
+];
+
+async function cargarDatos() {
+  document.getElementById('loading').style.display = 'flex';
+  document.getElementById('errorBox').style.display = 'none';
+
+  for (let i = 0; i < PROXIES.length; i++) {
+    try {
+      const url = PROXIES[i](CSV_URL);
+      const resp = await fetch(url, { cache: 'no-store' });
+      if (!resp.ok) continue;
+      const texto = await resp.text();
+      PRODUCTOS = parsearCSV(texto);
+      if (PRODUCTOS.length === 0) continue;
+
+      const disponibles = PRODUCTOS.filter(p => p.cant > 0).length;
+      document.getElementById('totalProductos').textContent = disponibles;
+      document.getElementById('loading').style.display = 'none';
+      renderGrid();
+      return;
+    } catch(e) {
+      console.warn('Proxy ' + i + ' falló:', e);
+    }
+  }
+
+  // Si todos los proxies fallan, mostrar error
+  document.getElementById('loading').style.display = 'none';
+  document.getElementById('errorBox').style.display = 'block';
+}
+
+// ── RENDERIZADO ──
+function setFilter(cat, btn) {
+  filtro = cat; pag = 0;
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  renderGrid();
+}
+
+function filtrados() {
+  return PRODUCTOS.filter(p => {
+    const mc = filtro === 'TODOS' || p.categoria === filtro;
+    const q = busq.toLowerCase();
+    return mc && (!q || p.nombre.toLowerCase().includes(q) || p.ref.toLowerCase().includes(q));
+  });
+}
+
+function renderGrid() {
+  busq = document.getElementById('searchInput').value;
+  pag = 0;
+  const lista = filtrados();
+  const g = document.getElementById('grid');
+  g.innerHTML = '';
+  document.getElementById('noRes').style.display = lista.length === 0 ? 'block' : 'none';
+  lista.slice(0, POR_PAG).forEach(p => g.appendChild(mkCard(p)));
+  document.getElementById('loadWrap').style.display = lista.length > POR_PAG ? 'block' : 'none';
+}
+
+function loadMore() {
+  pag++;
+  const lista = filtrados();
+  const desde = pag * POR_PAG;
+  lista.slice(desde, desde + POR_PAG).forEach(p => document.getElementById('grid').appendChild(mkCard(p)));
+  if (desde + POR_PAG >= lista.length) document.getElementById('loadWrap').style.display = 'none';
+}
+
+function mkCard(p) {
+  const ago = p.cant <= 0;
+  const d = document.createElement('div');
+  d.className = 'card';
+  d.onclick = () => openProd(p);
+  const cardImg = document.createElement('div');
+  cardImg.className = 'card-img';
+  const imgEl = document.createElement('img');
+  imgEl.src = p.variantes[0].imagen;
+  imgEl.alt = p.nombre;
+  imgEl.onerror = function() { this.parentElement.innerHTML = '<div class="ph">💄</div>'; };
+  cardImg.appendChild(imgEl);
+  d.appendChild(cardImg);
+  const sb = document.createElement('div');
+  sb.className = 'stock-badge' + (ago ? ' ago' : '');
+  sb.textContent = ago ? 'Agotado' : p.cant + ' uds';
+  d.appendChild(sb);
+  const body = document.createElement('div');
+  body.className = 'card-body';
+  body.innerHTML = '<div class="card-cat">' + p.categoria + '</div>' +
+    '<div class="card-name">' + p.nombre + '</div>' +
+    '<div class="card-prices"><div class="price-d">' + fmt(p.detal) + '</div>' +
+    '<div class="price-m">Mayor: ' + fmt(p.mayor) + '</div></div>';
+  const btn = document.createElement('button');
+  btn.className = 'add-btn';
+  btn.disabled = ago;
+  btn.textContent = ago ? 'Agotado' : '+ Agregar';
+  btn.onclick = function(e) { e.stopPropagation(); addQ(p.ref); };
+  body.appendChild(btn);
+  d.appendChild(body);
+  return d;
+}
+
+function addQ(ref) {
+  const p = PRODUCTOS.find(x => x.ref === ref);
+  if (!p || p.cant <= 0) return;
+  const ex = carrito.find(i => i.ref === ref && i.variante === p.variantes[0].variante);
+  if (ex) ex.cantidad++;
+  else carrito.push(Object.assign({}, p, {variante: p.variantes[0].variante, imagen: p.variantes[0].imagen, cantidad: 1}));
+  updCart();
+  toast('✓ ' + p.nombre.substring(0,30) + ' agregado');
+}
+
+function openProd(p) {
+  prodActual = p; varActual = 0; cantActual = 1;
+  document.getElementById('mCat').textContent = p.categoria;
+  document.getElementById('mName').textContent = p.nombre;
+  document.getElementById('mDetal').textContent = fmt(p.detal);
+  document.getElementById('mMayor').textContent = fmt(p.mayor);
+  document.getElementById('mQty').textContent = 1;
+  document.getElementById('mHint').style.display = 'none';
+  const img = document.getElementById('mImg');
+  img.style.display = 'block';
+  document.getElementById('mPh').style.display = 'none';
+  img.src = p.variantes[0].imagen;
+  const vg = document.getElementById('varGrid');
+  const vs = document.getElementById('varSec');
+  if (p.variantes.length > 1) {
+    vs.style.display = 'block'; vg.innerHTML = '';
+    p.variantes.forEach(function(v, i) {
+      const t = document.createElement('div');
+      t.className = 'var-thumb' + (i === 0 ? ' sel' : '');
+      t.onclick = function() { selVar(i); };
+      const ti = document.createElement('img');
+      ti.src = v.imagen; ti.alt = v.variante;
+      ti.style.cssText = 'width:100%;height:100%;object-fit:cover;display:block';
+      ti.onerror = function() { this.parentElement.innerHTML = '<div class="vph">💄</div>'; };
+      t.appendChild(ti); vg.appendChild(t);
+    });
+  } else vs.style.display = 'none';
+  const gs = document.getElementById('guiaSec');
+  if (p.guia) { gs.style.display = 'block'; document.getElementById('guiaImg').src = p.guia; }
+  else gs.style.display = 'none';
+  document.getElementById('addBtn').disabled = p.cant <= 0;
+  document.getElementById('addBtn').textContent = p.cant <= 0 ? '😔 Producto agotado' : '🛒 Agregar al carrito';
+  document.getElementById('overlay').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+
+function selVar(i) {
+  varActual = i;
+  document.getElementById('mImg').src = prodActual.variantes[i].imagen;
+  document.querySelectorAll('.var-thumb').forEach(function(t,j){ t.classList.toggle('sel', j===i); });
+}
+
+function chgQty(d) {
+  cantActual = Math.max(1, cantActual + d);
+  document.getElementById('mQty').textContent = cantActual;
+  const nd = totalDif() + (carrito.find(i => i.ref === (prodActual ? prodActual.ref : '')) ? 0 : 1);
+  document.getElementById('mHint').style.display = nd >= 6 ? 'flex' : 'none';
+}
+
+function addToCart() {
+  if (!prodActual || prodActual.cant <= 0) return;
+  const v = prodActual.variantes[varActual];
+  const key = prodActual.ref + '|' + v.variante;
+  const ex = carrito.find(i => i.ref + '|' + i.variante === key);
+  if (ex) ex.cantidad += cantActual;
+  else carrito.push(Object.assign({}, prodActual, {variante: v.variante, imagen: v.imagen, cantidad: cantActual}));
+  updCart(); closeModal();
+  toast('✓ ' + prodActual.nombre.substring(0,28) + ' al carrito');
+}
+
+function closeModal() { document.getElementById('overlay').classList.remove('open'); document.body.style.overflow = ''; }
+function closeMO(e) { if (e.target === document.getElementById('overlay')) closeModal(); }
+function openCart() { document.getElementById('cartOv').classList.add('open'); document.getElementById('cartPanel').classList.add('open'); document.body.style.overflow = 'hidden'; renderCart(); }
+function closeCart() { document.getElementById('cartOv').classList.remove('open'); document.getElementById('cartPanel').classList.remove('open'); document.body.style.overflow = ''; }
+function closeCOv(e) { if (e.target === document.getElementById('cartOv')) closeCart(); }
+
+function renderCart() {
+  const c = document.getElementById('cartItems');
+  const may = esMay();
+  if (!carrito.length) {
+    c.innerHTML = '<div class="cart-empty"><div class="ico">🛒</div><p>Tu carrito está vacío</p></div>';
+    document.getElementById('cartTot').textContent = '$0';
+    document.getElementById('cartCnt').textContent = '';
+    document.getElementById('waBtn').disabled = true;
+    return;
+  }
+  c.innerHTML = '';
+  carrito.forEach(function(item, idx) {
+    const pr = may ? item.mayor : item.detal;
+    const d = document.createElement('div');
+    d.className = 'ci';
+    const ci = document.createElement('img');
+    ci.src = item.imagen; ci.alt = item.nombre;
+    ci.style.cssText = 'width:52px;height:52px;border-radius:8px;object-fit:cover;flex-shrink:0';
+    d.appendChild(ci);
+    const info = document.createElement('div');
+    info.className = 'ci-info';
+    info.innerHTML = '<div class="ci-name">' + item.nombre + '</div>' +
+      '<div class="ci-var">' + (item.variante !== 'Principal' ? item.variante : '') +
+      (may ? ' <span class="ci-may">Mayorista</span>' : '') + '</div>' +
+      '<div class="ci-row">' +
+        '<button class="ci-qb" onclick="chgC(' + idx + ',-1)">−</button>' +
+        '<div class="ci-q">' + item.cantidad + '</div>' +
+        '<button class="ci-qb" onclick="chgC(' + idx + ',1)">+</button>' +
+        '<div class="ci-p">' + fmt(pr * item.cantidad) + '</div>' +
+        '<button class="ci-del" onclick="delC(' + idx + ')">🗑</button>' +
+      '</div>';
+    d.appendChild(info); c.appendChild(d);
+  });
+  document.getElementById('cartTot').textContent = fmt(totalCart());
+  const nd = totalDif();
+  document.getElementById('cartCnt').textContent = may
+    ? '🎉 ¡Precio mayorista! (' + nd + ' productos)'
+    : nd + ' producto(s) — faltan ' + (6-nd) + ' para mayorista';
+  document.getElementById('waBtn').disabled = false;
+}
+
+function chgC(i, d) { carrito[i].cantidad = Math.max(1, carrito[i].cantidad+d); updCart(); renderCart(); }
+function delC(i) { carrito.splice(i,1); updCart(); renderCart(); }
+function updCart() { document.getElementById('cartCount').textContent = carrito.reduce((s,i)=>s+i.cantidad,0); }
+
+function openForm() {
+  if (!carrito.length) return;
+  document.getElementById('cTipo').value = esMay() ? 'MAYORISTA' : 'DETAL';
+  document.getElementById('formOv').classList.add('open');
+}
+function closeForm() { document.getElementById('formOv').classList.remove('open'); }
+
+function sendWA() {
+  const nom = document.getElementById('cNom').value.trim();
+  const ape = document.getElementById('cApe').value.trim();
+  const tel = document.getElementById('cTel').value.trim();
+  const ciu = document.getElementById('cCiu').value.trim();
+  const tip = document.getElementById('cTipo').value;
+  const not = document.getElementById('cNot').value.trim();
+  if (!nom || !tel) { alert('Por favor ingresa nombre y teléfono.'); return; }
+  const may = esMay();
+  let msg = '✨ *NUEVO PEDIDO — LALIS GLOW*\n\n👤 *Cliente:* ' + nom + ' ' + ape + '\n📱 *WhatsApp:* ' + tel + '\n';
+  if (ciu) msg += '📍 *Ciudad:* ' + ciu + '\n';
+  msg += '🏷️ *Tipo:* ' + tip + '\n\n━━━━━━━━━━━━━\n🛒 *PRODUCTOS:*\n\n';
+  carrito.forEach(function(item,i) {
+    const pr = may ? item.mayor : item.detal;
+    msg += (i+1) + '. *' + item.nombre + '*\n';
+    if (item.variante !== 'Principal') msg += '   Estilo: ' + item.variante + '\n';
+    msg += '   ' + item.cantidad + ' × ' + fmt(pr) + ' = *' + fmt(pr*item.cantidad) + '*\n\n';
+  });
+  msg += '━━━━━━━━━━━━━\n💰 *TOTAL: ' + fmt(totalCart()) + '*';
+  if (may) msg += '\n✅ _Precio mayorista aplicado_';
+  if (not) msg += '\n\n📝 *Notas:* ' + not;
+  msg += '\n\n_Pedido desde catálogo web Lalis Glow_';
+  window.open('https://wa.me/' + WA_NUMBER + '?text=' + encodeURIComponent(msg), '_blank');
+  closeForm(); closeCart(); toast('¡Pedido enviado! ✓');
+}
+
+function toast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  setTimeout(function(){ t.classList.remove('show'); }, 2500);
+}
+
+// ── INICIAR ──
+cargarDatos();
+</script>
+</body>
+</html>
