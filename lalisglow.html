@@ -509,22 +509,31 @@ function cargarDatos() {
   document.head.appendChild(script);
 }
 
-function onDatosRecibidos(data) {
+function onDatosRecibidos(rawData) {
   if (window._cancelTimeout) window._cancelTimeout();
   try {
+    // La API gviz devuelve texto con prefijo que hay que limpiar
+    let data = rawData;
+    if (typeof rawData === 'string') {
+      const json = rawData.replace(/^[^{]*/, '').replace(/[^}]*$/, '');
+      data = JSON.parse(json);
+    }
     const rows = data.table.rows;
     PRODUCTOS = [];
     rows.forEach(function(row) {
-      if (!row.c) return;
-      const get = i => (row.c[i] && row.c[i].v !== null) ? row.c[i].v : '';
+      if (!row || !row.c) return;
+      const get = function(i) {
+        if (!row.c[i] || row.c[i].v === null || row.c[i].v === undefined) return '';
+        return row.c[i].v;
+      };
       const ref = String(get(1)).trim();
       const nombre = String(get(2)).trim();
-      const detal = parseFloat(get(3)) || 0;
-      const mayor = parseFloat(get(4)) || 0;
-      const cant = parseInt(get(5)) || 0;
-      const categoria = String(get(6) || 'GENERAL').trim().toUpperCase();
+      if (!ref || !nombre || ref === 'REFERENCIA' || ref === 'null') return;
+      const detal = parseFloat(String(get(3)).replace(/[^0-9.]/g,'')) || 0;
+      const mayor = parseFloat(String(get(4)).replace(/[^0-9.]/g,'')) || 0;
+      const cant = parseInt(String(get(5)).replace(/[^0-9-]/g,'')) || 0;
+      const categoria = String(get(6) || 'GENERAL').trim().toUpperCase() || 'GENERAL';
       const guia = String(get(7) || '').trim();
-      if (!ref || !nombre || ref === 'REFERENCIA') return;
       const imagen = obtenerImagen(ref, nombre);
       PRODUCTOS.push({ ref, nombre, cant, detal, mayor, categoria, guia,
         variantes: [{ variante: 'Principal', imagen }] });
@@ -534,7 +543,7 @@ function onDatosRecibidos(data) {
     document.getElementById('loading').style.display = 'none';
     renderGrid();
   } catch(e) {
-    console.error('Error:', e);
+    console.error('Error procesando datos:', e);
     document.getElementById('loading').style.display = 'none';
     document.getElementById('errorBox').style.display = 'block';
   }
