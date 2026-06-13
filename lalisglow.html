@@ -480,39 +480,64 @@ function obtenerImagen(ref, nombre) {
   return 'CATALOGO/' + nombre + '.png';
 }
 
-// ── CARGAR DATOS DESDE GOOGLE SHEETS ──
-const PROXIES = [
-  url => 'https://api.allorigins.win/raw?url=' + encodeURIComponent(url),
-  url => 'https://corsproxy.io/?' + encodeURIComponent(url),
-  url => 'https://cors-anywhere.herokuapp.com/' + url,
-];
+// ── CARGAR DATOS USANDO GOOGLE VISUALIZATION API (sin CORS) ──
+const SHEET_ID = '1jTCFZ0X7hPr2W9awf6R7qs6PZLgNRWOrQxufP6DwyPw';
+const GID_CATALOGO = '1229897467';
 
-async function cargarDatos() {
+function cargarDatos() {
   document.getElementById('loading').style.display = 'flex';
   document.getElementById('errorBox').style.display = 'none';
 
-  for (let i = 0; i < PROXIES.length; i++) {
-    try {
-      const url = PROXIES[i](CSV_URL);
-      const resp = await fetch(url, { cache: 'no-store' });
-      if (!resp.ok) continue;
-      const texto = await resp.text();
-      PRODUCTOS = parsearCSV(texto);
-      if (PRODUCTOS.length === 0) continue;
+  // Timeout de 10 segundos
+  const timeout = setTimeout(function() {
+    document.getElementById('loading').style.display = 'none';
+    document.getElementById('errorBox').style.display = 'block';
+  }, 10000);
 
-      const disponibles = PRODUCTOS.filter(p => p.cant > 0).length;
-      document.getElementById('totalProductos').textContent = disponibles;
-      document.getElementById('loading').style.display = 'none';
-      renderGrid();
-      return;
-    } catch(e) {
-      console.warn('Proxy ' + i + ' falló:', e);
-    }
+  window._cancelTimeout = function() { clearTimeout(timeout); };
+
+  const url = 'https://docs.google.com/spreadsheets/d/' + SHEET_ID +
+    '/gviz/tq?tqx=out:json&gid=' + GID_CATALOGO + '&t=' + Date.now();
+
+  const script = document.createElement('script');
+  script.src = url + '&callback=onDatosRecibidos';
+  script.onerror = function() {
+    clearTimeout(timeout);
+    document.getElementById('loading').style.display = 'none';
+    document.getElementById('errorBox').style.display = 'block';
+  };
+  document.head.appendChild(script);
+}
+
+function onDatosRecibidos(data) {
+  if (window._cancelTimeout) window._cancelTimeout();
+  try {
+    const rows = data.table.rows;
+    PRODUCTOS = [];
+    rows.forEach(function(row) {
+      if (!row.c) return;
+      const get = i => (row.c[i] && row.c[i].v !== null) ? row.c[i].v : '';
+      const ref = String(get(1)).trim();
+      const nombre = String(get(2)).trim();
+      const detal = parseFloat(get(3)) || 0;
+      const mayor = parseFloat(get(4)) || 0;
+      const cant = parseInt(get(5)) || 0;
+      const categoria = String(get(6) || 'GENERAL').trim().toUpperCase();
+      const guia = String(get(7) || '').trim();
+      if (!ref || !nombre || ref === 'REFERENCIA') return;
+      const imagen = obtenerImagen(ref, nombre);
+      PRODUCTOS.push({ ref, nombre, cant, detal, mayor, categoria, guia,
+        variantes: [{ variante: 'Principal', imagen }] });
+    });
+    const disponibles = PRODUCTOS.filter(p => p.cant > 0).length;
+    document.getElementById('totalProductos').textContent = disponibles;
+    document.getElementById('loading').style.display = 'none';
+    renderGrid();
+  } catch(e) {
+    console.error('Error:', e);
+    document.getElementById('loading').style.display = 'none';
+    document.getElementById('errorBox').style.display = 'block';
   }
-
-  // Si todos los proxies fallan, mostrar error
-  document.getElementById('loading').style.display = 'none';
-  document.getElementById('errorBox').style.display = 'block';
 }
 
 // ── RENDERIZADO ──
