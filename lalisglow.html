@@ -493,6 +493,8 @@ async function cargarDatos() {
     const datos = await resp.json();
     
     PRODUCTOS = datos.map(function(p) {
+      // Usar imagen del Apps Script si existe, sino buscar en el mapa local
+      var img = p.imagen && p.imagen !== '' ? p.imagen : obtenerImagen(p.ref, p.nombre);
       return {
         ref: p.ref,
         nombre: p.nombre,
@@ -501,7 +503,7 @@ async function cargarDatos() {
         mayor: p.mayor,
         categoria: p.categoria || 'GENERAL',
         guia: p.guia || '',
-        variantes: [{ variante: 'Principal', imagen: obtenerImagen(p.ref, p.nombre) }]
+        variantes: [{ variante: 'Principal', imagen: img }]
       };
     });
 
