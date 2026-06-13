@@ -480,33 +480,40 @@ function obtenerImagen(ref, nombre) {
   return 'CATALOGO/' + nombre + '.png';
 }
 
-// ── CARGAR DATOS USANDO GOOGLE VISUALIZATION API (sin CORS) ──
-const SHEET_ID = '1jTCFZ0X7hPr2W9awf6R7qs6PZLgNRWOrQxufP6DwyPw';
-const GID_CATALOGO = '1229897467';
+// ── CARGAR DATOS DESDE APPS SCRIPT ──
+const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwEO68unYkGmftMhqQsaU5tv9ChrK9hjerkmE__1GQcyroILmj-xlhutIX-pD9JGe2w/exec';
 
-function cargarDatos() {
+async function cargarDatos() {
   document.getElementById('loading').style.display = 'flex';
   document.getElementById('errorBox').style.display = 'none';
 
-  // Timeout de 10 segundos
-  const timeout = setTimeout(function() {
+  try {
+    const resp = await fetch(APPS_SCRIPT_URL);
+    if (!resp.ok) throw new Error('Error ' + resp.status);
+    const datos = await resp.json();
+    
+    PRODUCTOS = datos.map(function(p) {
+      return {
+        ref: p.ref,
+        nombre: p.nombre,
+        cant: p.cant,
+        detal: p.detal,
+        mayor: p.mayor,
+        categoria: p.categoria || 'GENERAL',
+        guia: p.guia || '',
+        variantes: [{ variante: 'Principal', imagen: obtenerImagen(p.ref, p.nombre) }]
+      };
+    });
+
+    const disponibles = PRODUCTOS.filter(p => p.cant > 0).length;
+    document.getElementById('totalProductos').textContent = disponibles;
+    document.getElementById('loading').style.display = 'none';
+    renderGrid();
+  } catch(e) {
+    console.error('Error cargando datos:', e);
     document.getElementById('loading').style.display = 'none';
     document.getElementById('errorBox').style.display = 'block';
-  }, 10000);
-
-  window._cancelTimeout = function() { clearTimeout(timeout); };
-
-  const url = 'https://docs.google.com/spreadsheets/d/' + SHEET_ID +
-    '/gviz/tq?tqx=out:json&gid=' + GID_CATALOGO + '&t=' + Date.now();
-
-  const script = document.createElement('script');
-  script.src = url + '&callback=onDatosRecibidos';
-  script.onerror = function() {
-    clearTimeout(timeout);
-    document.getElementById('loading').style.display = 'none';
-    document.getElementById('errorBox').style.display = 'block';
-  };
-  document.head.appendChild(script);
+  }
 }
 
 function onDatosRecibidos(rawData) {
