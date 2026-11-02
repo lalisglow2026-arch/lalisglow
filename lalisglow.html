@@ -416,7 +416,7 @@ const esMay = () => totalDif() >= 6;
 const precioItem = i => esMay() ? i.mayor : i.detal;
 const totalCart = () => carrito.reduce((s,i) => s + precioItem(i)*i.cantidad, 0);
 
-// ── MAPA DE IMÁGENES ──
+// ── MAPA DE IMÁGENES PRINCIPALES ──
 const IMAGENES = {
   "ABANICO":"1UXlEuBDjET9bIny-HcdJiv4Cbeeb4BHA",
   "ACONDICIONADORSYVPA":"1D5mPN09-tmxHvMkt8TIE5pmlefWwueQ2",
@@ -427,7 +427,6 @@ const IMAGENES = {
   "BASEKLM":"1afLNY4JQoqAQm80uTe"
 };
 
-// ── OBTENER URL DE GOOGLE DRIVE ──
 function obtenerUrlDrive(nombreArchivo) {
   if (!nombreArchivo) return '';
   if (nombreArchivo.includes('drive.google.com') || nombreArchivo.includes('http')) {
@@ -451,7 +450,6 @@ function obtenerImagen(ref, nombre) {
   return '';
 }
 
-// ── PARSEAR LÍNEA CSV ──
 function parsearLineaCSV(linea) {
   const resultado = [];
   let dentro = false, campo = '';
@@ -465,10 +463,11 @@ function parsearLineaCSV(linea) {
   return resultado;
 }
 
-// ── AGRUPAR PRODUCTOS Y VARIANTES EN BASE AL CSV ──
+// ── PROCESAR PRODUCTOS Y AGRUPAR VARIANTES ──
 function procesarProductosYVariantes(lineas) {
-  const mapaProductos = {};
+  const filasRaw = [];
 
+  // 1. Leer todas las filas válidas del CSV
   for (let i = 1; i < lineas.length; i++) {
     const cols = parsearLineaCSV(lineas[i]);
     if (!cols || cols.length < 6) continue;
@@ -484,35 +483,43 @@ function procesarProductosYVariantes(lineas) {
 
     if (!ref || !nombre) continue;
 
-    if (!mapaProductos[nombre]) {
-      mapaProductos[nombre] = {
-        ref: ref,
-        nombre: nombre,
-        detal: detal,
-        mayor: mayor,
+    filasRaw.push({ ref, nombre, detal, mayor, cant, categoria, guia, rutaImagen });
+  }
+
+  const mapaProductos = {};
+
+  // 2. Agrupar por nombre base del producto
+  filasRaw.forEach(item => {
+    const key = item.nombre;
+    const imgUrl = obtenerUrlDrive(item.rutaImagen) || obtenerImagen(item.ref, item.nombre);
+
+    if (!mapaProductos[key]) {
+      mapaProductos[key] = {
+        ref: item.ref,
+        nombre: item.nombre,
+        detal: item.detal,
+        mayor: item.mayor,
         cantTotal: 0,
-        categoria: categoria,
-        guia: guia,
-        imagenPrincipal: obtenerUrlDrive(rutaImagen) || obtenerImagen(ref, nombre),
+        categoria: item.categoria,
+        guia: item.guia,
+        imagenPrincipal: imgUrl,
         variantes: []
       };
     }
 
-    mapaProductos[nombre].cantTotal += cant;
-
-    const imgUrl = obtenerUrlDrive(rutaImagen) || obtenerImagen(ref, nombre);
-    mapaProductos[nombre].variantes.push({
-      refVariante: ref,
-      nombreVariante: ref.includes('Variante') ? ref : `Opción ${mapaProductos[nombre].variantes.length + 1}`,
+    mapaProductos[key].cantTotal += item.cant;
+    mapaProductos[key].variantes.push({
+      refVariante: item.ref,
+      nombreVariante: item.ref.includes('Variante') || item.ref.includes('STARMONT') ? item.ref : `Opción ${mapaProductos[key].variantes.length + 1}`,
       imagen: imgUrl,
-      cant: cant
+      cant: item.cant
     });
-  }
+  });
 
   return Object.values(mapaProductos);
 }
 
-// ── CARGAR DATOS DESDE GOOGLE SHEETS ──
+// ── CARGAR DATOS ──
 function cargarDatos() {
   document.getElementById('loading').style.display = 'flex';
   document.getElementById('errorBox').style.display = 'none';
@@ -537,7 +544,7 @@ function cargarDatos() {
     });
 }
 
-// ── RENDERIZAR RECUADROS EN EL CATÁLOGO ──
+// ── RENDERIZAR GRID ──
 function renderGrid() {
   const grid = document.getElementById('grid');
   const noRes = document.getElementById('noRes');
@@ -601,10 +608,7 @@ function renderGrid() {
   }
 }
 
-function loadMore() {
-  pag++;
-  renderGrid();
-}
+function loadMore() { pag++; renderGrid(); }
 
 function setFilter(cat, btn) {
   filtro = cat;
@@ -620,7 +624,7 @@ document.getElementById('searchInput').addEventListener('input', (e) => {
   renderGrid();
 });
 
-// ── VENTANA MODAL DEL PRODUCTO ──
+// ── MODAL ──
 function openModal(prod) {
   prodActual = prod;
   varActual = 0;
@@ -729,14 +733,10 @@ function updateModalBtn() {
   }
 }
 
-function closeModal() {
-  document.getElementById('overlay').classList.remove('open');
-}
-function closeMO(e) {
-  if (e.target.id === 'overlay') closeModal();
-}
+function closeModal() { document.getElementById('overlay').classList.remove('open'); }
+function closeMO(e) { if (e.target.id === 'overlay') closeModal(); }
 
-// ── MANEJO DEL CARRITO ──
+// ── CARRITO Y WHATSAPP ──
 function addToCart() {
   if (!prodActual || prodActual.cantTotal <= 0) return;
 
@@ -775,11 +775,7 @@ function updateCartUI() {
   waBtn.disabled = carrito.length === 0;
 
   if (carrito.length === 0) {
-    cartItems.innerHTML = `
-      <div class="cart-empty">
-        <div class="ico">🛒</div>
-        <p>Tu carrito está vacío</p>
-      </div>`;
+    cartItems.innerHTML = `<div class="cart-empty"><div class="ico">🛒</div><p>Tu carrito está vacío</p></div>`;
     cartTot.textContent = '$0';
     cartCnt.textContent = '';
     return;
@@ -820,9 +816,7 @@ function updateCartUI() {
 
 function chgCartQty(index, delta) {
   carrito[index].cantidad += delta;
-  if (carrito[index].cantidad <= 0) {
-    carrito.splice(index, 1);
-  }
+  if (carrito[index].cantidad <= 0) carrito.splice(index, 1);
   updateCartUI();
 }
 
@@ -840,19 +834,14 @@ function closeCart() {
   document.getElementById('cartOv').classList.remove('open');
   document.getElementById('cartPanel').classList.remove('open');
 }
-function closeCOv(e) {
-  if (e.target.id === 'cartOv') closeCart();
-}
+function closeCOv(e) { if (e.target.id === 'cartOv') closeCart(); }
 
-// ── FORMULARIO Y ENVÍO A WHATSAPP ──
 function openForm() {
   if (carrito.length === 0) return;
   document.getElementById('cTipo').value = esMay() ? 'MAYORISTA' : 'DETAL';
   document.getElementById('formOv').classList.add('open');
 }
-function closeForm() {
-  document.getElementById('formOv').classList.remove('open');
-}
+function closeForm() { document.getElementById('formOv').classList.remove('open'); }
 
 function sendWA() {
   const nom = document.getElementById('cNom').value.trim();
@@ -894,8 +883,5 @@ function showToast(txt) {
   setTimeout(() => toast.classList.remove('show'), 3000);
 }
 
-// Inicializar la carga al abrir
 cargarDatos();
 </script>
-</body>
-</html>
