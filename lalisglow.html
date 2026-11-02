@@ -463,58 +463,50 @@ function parsearLineaCSV(linea) {
   return resultado;
 }
 
-// ── PROCESAR PRODUCTOS Y AGRUPAR VARIANTES ──
+// ── PROCESAR PRODUCTOS Y VARIANTES SEGÚN LAS COLUMNAS DE TU HOJA ──
 function procesarProductosYVariantes(lineas) {
-  const filasRaw = [];
-
-  // 1. Leer todas las filas válidas del CSV
-  for (let i = 1; i < lineas.length; i++) {
-    const cols = parsearLineaCSV(lineas[i]);
-    if (!cols || cols.length < 6) continue;
-
-    const ref = (cols[1] || '').trim();
-    const nombre = (cols[2] || '').trim();
-    const detal = parseFloat((cols[3] || '0').replace(/[^0-9.]/g,'')) || 0;
-    const mayor = parseFloat((cols[4] || '0').replace(/[^0-9.]/g,'')) || 0;
-    const cant = parseInt((cols[5] || '0').replace(/[^0-9-]/g,'')) || 0;
-    const categoria = (cols[6] || 'GENERAL').trim().toUpperCase();
-    const guia = (cols[7] || '').trim();
-    const rutaImagen = (cols[4] || cols[8] || '').trim();
-
-    if (!ref || !nombre) continue;
-
-    filasRaw.push({ ref, nombre, detal, mayor, cant, categoria, guia, rutaImagen });
-  }
-
   const mapaProductos = {};
 
-  // 2. Agrupar por nombre base del producto
-  filasRaw.forEach(item => {
-    const key = item.nombre;
-    const imgUrl = obtenerUrlDrive(item.rutaImagen) || obtenerImagen(item.ref, item.nombre);
+  for (let i = 1; i < lineas.length; i++) {
+    const cols = parsearLineaCSV(lineas[i]);
+    if (!cols || cols.length < 9) continue;
 
-    if (!mapaProductos[key]) {
-      mapaProductos[key] = {
-        ref: item.ref,
-        nombre: item.nombre,
-        detal: item.detal,
-        mayor: item.mayor,
+    const ref = (cols[1] || '').trim();          // Columna B (Referencia)
+    const nombre = (cols[2] || '').trim();       // Columna C (Producto)
+    const varianteRef = (cols[3] || '').trim();  // Columna D (Variante / Opción)
+    const rutaImagen = (cols[4] || '').trim();   // Columna E (Imagen)
+    const categoria = (cols[5] || 'GENERAL').trim().toUpperCase(); // Columna F (Categoría)
+    const detal = parseFloat((cols[6] || '0').replace(/[^0-9.]/g,'')) || 0;  // Columna G (Detal)
+    const mayor = parseFloat((cols[7] || '0').replace(/[^0-9.]/g,'')) || 0;  // Columna H (Mayor)
+    const cant = parseInt((cols[8] || '0').replace(/[^0-9-]/g,'')) || 0;     // Columna I (Cantidad)
+    const guia = (cols[9] || '').trim();         // Columna J (Guía de cuidado)
+
+    if (!nombre) continue;
+
+    const imgUrl = obtenerUrlDrive(rutaImagen) || obtenerImagen(ref, nombre);
+
+    if (!mapaProductos[nombre]) {
+      mapaProductos[nombre] = {
+        ref: ref,
+        nombre: nombre,
+        detal: detal,
+        mayor: mayor,
         cantTotal: 0,
-        categoria: item.categoria,
-        guia: item.guia,
+        categoria: categoria,
+        guia: guia,
         imagenPrincipal: imgUrl,
         variantes: []
       };
     }
 
-    mapaProductos[key].cantTotal += item.cant;
-    mapaProductos[key].variantes.push({
-      refVariante: item.ref,
-      nombreVariante: item.ref.includes('Variante') || item.ref.includes('STARMONT') ? item.ref : `Opción ${mapaProductos[key].variantes.length + 1}`,
+    mapaProductos[nombre].cantTotal += cant;
+    mapaProductos[nombre].variantes.push({
+      refVariante: varianteRef || ref,
+      nombreVariante: varianteRef ? varianteRef : `Opción ${mapaProductos[nombre].variantes.length + 1}`,
       imagen: imgUrl,
-      cant: item.cant
+      cant: cant
     });
-  });
+  }
 
   return Object.values(mapaProductos);
 }
