@@ -186,6 +186,12 @@
     .var-thumb.sel { border-color: var(--accent); box-shadow: 0 0 5px rgba(212,175,55,0.5); }
     .vph { font-size: 1rem; color: #999; }
 
+    /* GUÍA DE CUIDADO */
+    .guia-section { margin-top: 15px; border-top: 1px solid var(--border); padding-top: 10px; }
+    .guia-title { font-size: 0.8rem; font-weight: 600; color: var(--text-light); margin-bottom: 6px; }
+    .guia-img-container { width: 100%; max-height: 120px; border-radius: 6px; overflow: hidden; border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; background: #f9f9f9; }
+    .guia-img-container img { width: 100%; height: 100%; object-fit: cover; }
+
     .modal-details { margin-bottom: 15px; }
     .m-cat { font-size: 0.7rem; color: var(--text-light); text-transform: uppercase; }
     .m-name { font-size: 1.1rem; font-weight: 700; color: var(--text); margin-bottom: 8px; }
@@ -327,6 +333,15 @@
             <button class="qty-btn" onclick="chgQty(1)">+</button>
           </div>
         </div>
+
+        <!-- GUÍA DE CUIDADO -->
+        <div id="guiaSec" class="guia-section" style="display:none;">
+          <div class="guia-title">Guía de Cuidado</div>
+          <div class="guia-img-container">
+            <img id="guiaImg" src="" alt="Guía de cuidado">
+          </div>
+        </div>
+
       </div>
       <div class="modal-footer">
         <button id="addBtn" class="modal-add-btn" onclick="addToCart()">🛒 Agregar al carrito</button>
@@ -451,32 +466,33 @@ function parsearLineaCSV(linea) {
   return resultado;
 }
 
-// ── PROCESAR PRODUCTOS Y AGRUPAR VARIANTES ──
+// ── PROCESAR PRODUCTOS Y AGRUPAR VARIANTES (FLEXIBLE Y ROBUSTO) ──
 function procesarProductosYVariantes(lineas) {
   const mapaProductos = {};
 
   for (let i = 1; i < lineas.length; i++) {
     const cols = parsearLineaCSV(lineas[i]);
-    if (!cols || cols.length < 9) continue;
+    if (!cols || cols.length < 6) continue;
 
     const ref = (cols[1] || '').trim();          // Col B: Referencia
     const nombre = (cols[2] || '').trim();       // Col C: Nombre Producto
     const varianteRef = (cols[3] || '').trim();  // Col D: Variante / Opción
-    const rutaImagen = (cols[4] || '').trim();   // Col E: Ruta / ID Imagen
-    const categoria = (cols[5] || 'GENERAL').trim().toUpperCase(); // Col F: Categoría
-    const detal = parseFloat((cols[6] || '0').replace(/[^0-9.]/g,'')) || 0;  // Col G: Precio Detal
-    const mayor = parseFloat((cols[7] || '0').replace(/[^0-9.]/g,'')) || 0;  // Col H: Precio Mayor
-    const cant = parseInt((cols[8] || '0').replace(/[^0-9-]/g,'')) || 0;     // Col I: Stock Cantidad
-    const guia = (cols[9] || '').trim();         // Col J: Guía Cuidado
+    const rutaImagen = (cols[4] || cols[8] || '').trim(); // Col E o H: Imagen
+    const categoria = (cols[5] || cols[6] || 'GENERAL').trim().toUpperCase(); // Categoría
+    const detal = parseFloat((cols[6] || cols[3] || '0').replace(/[^0-9.]/g,'')) || 0;  
+    const mayor = parseFloat((cols[7] || cols[4] || '0').replace(/[^0-9.]/g,'')) || 0;  
+    const cant = parseInt((cols[8] || cols[5] || '0').replace(/[^0-9-]/g,'')) || 0;     
+    const guia = (cols[9] || '').trim();         
 
-    if (!nombre) continue;
+    if (!nombre && !ref) continue;
+    const nombreBase = nombre || ref;
 
-    const imgUrl = obtenerUrlDrive(rutaImagen) || obtenerImagen(ref, nombre);
+    const imgUrl = obtenerUrlDrive(rutaImagen);
 
-    if (!mapaProductos[nombre]) {
-      mapaProductos[nombre] = {
+    if (!mapaProductos[nombreBase]) {
+      mapaProductos[nombreBase] = {
         ref: ref,
-        nombre: nombre,
+        nombre: nombreBase,
         detal: detal,
         mayor: mayor,
         cantTotal: 0,
@@ -487,10 +503,14 @@ function procesarProductosYVariantes(lineas) {
       };
     }
 
-    mapaProductos[nombre].cantTotal += cant;
-    mapaProductos[nombre].variantes.push({
+    mapaProductos[nombreBase].cantTotal += cant;
+    if (imgUrl && !mapaProductos[nombreBase].imagenPrincipal) {
+      mapaProductos[nombreBase].imagenPrincipal = imgUrl;
+    }
+
+    mapaProductos[nombreBase].variantes.push({
       refVariante: varianteRef || ref,
-      nombreVariante: varianteRef ? varianteRef : `Opción ${mapaProductos[nombre].variantes.length + 1}`,
+      nombreVariante: varianteRef ? varianteRef : `Opción ${mapaProductos[nombreBase].variantes.length + 1}`,
       imagen: imgUrl,
       cant: cant
     });
@@ -513,8 +533,6 @@ function cargarDatos() {
       const lineas = texto.split('\n');
       PRODUCTOS = procesarProductosYVariantes(lineas);
       
-      const totElem = document.getElementById('totalProductos');
-      if (totElem) totElem.textContent = PRODUCTOS.length;
       if (loading) loading.style.display = 'none';
       renderGrid();
     })
@@ -581,14 +599,7 @@ function renderGrid() {
     `;
     grid.appendChild(card);
   });
-
-  const loadWrap = document.getElementById('loadWrap');
-  if (loadWrap) {
-    loadWrap.style.display = (filtrados.length > limite) ? 'block' : 'none';
-  }
 }
-
-function loadMore() { pag++; renderGrid(); }
 
 function setFilter(cat, btn) {
   filtro = cat;
