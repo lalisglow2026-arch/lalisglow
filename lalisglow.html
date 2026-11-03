@@ -231,7 +231,7 @@
     .cp-tot-row { display: flex; justify-content: space-between; margin-bottom: 8px; font-weight: 700; font-size: 1rem; }
     .cp-not { font-size: 0.75rem; color: var(--text-light); margin-bottom: 10px; text-align: center; }
     .send-wa-btn { width: 100%; background: #25d366; color: white; border: none; padding: 12px; border-radius: 6px; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; font-size: 0.95rem; }
-    .send-wa-btn:disabled { background: #ccc; cursor: not-align; }
+    .send-wa-btn:disabled { background: #ccc; cursor: not-allowed; }
 
     /* FORMULARIO DATOS */
     .form-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 1300; display: flex; align-items: center; justify-content: center; opacity: 0; pointer-events: none; transition: opacity 0.3s; padding: 15px; }
@@ -286,3 +286,592 @@
   </div>
 
   <!-- VENTANA MODAL -->
+  <div id="overlay" class="overlay" onclick="closeMO(event)">
+    <div class="modal">
+      <div class="modal-header">
+        <h3 id="mCat">CATEGORÍA</h3>
+        <button class="close-btn" onclick="closeModal()">×</button>
+      </div>
+      <div class="modal-body">
+        <div class="modal-img-container">
+          <img id="mImg" src="" alt="" style="display:none;">
+          <div id="mPh" class="ph">💄</div>
+        </div>
+
+        <!-- MINIATURAS DE VARIANTES -->
+        <div id="varSec" class="var-section" style="display:none;">
+          <div class="var-title">Selecciona una opción / variante:</div>
+          <div id="varGrid" class="var-grid"></div>
+        </div>
+
+        <div class="modal-details">
+          <div id="mName" class="m-name">Nombre del producto</div>
+          <div class="m-prices">
+            <div class="mp-item">
+              <span>Precio Detal</span>
+              <strong id="mDetal">$0</strong>
+            </div>
+            <div class="mp-item" style="text-align:right;">
+              <span>Precio Mayorista (6+ uds)</span>
+              <strong id="mMayor" style="color:var(--accent);">$0</strong>
+            </div>
+          </div>
+          <div id="mHint" class="m-hint" style="display:none;">✨ ¡Precio mayorista activo!</div>
+        </div>
+
+        <div class="qty-row">
+          <span style="font-size:0.85rem; font-weight:600;">Cantidad:</span>
+          <div class="qty-controls">
+            <button class="qty-btn" onclick="chgQty(-1)">−</button>
+            <span id="mQty" class="qty-val">1</span>
+            <button class="qty-btn" onclick="chgQty(1)">+</button>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button id="addBtn" class="modal-add-btn" onclick="addToCart()">🛒 Agregar al carrito</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- CARRITO FLOTANTE -->
+  <div class="cart-float" onclick="openCart()">
+    🛒 Carrito <span id="cartCount" class="cart-badge">0</span>
+  </div>
+
+  <!-- PANEL LATERAL CARRITO -->
+  <div id="cartOv" class="cart-overlay" onclick="closeCOv(event)"></div>
+  <div id="cartPanel" class="cart-panel">
+    <div class="cp-header">
+      <h3>Tu Pedido</h3>
+      <button class="close-btn" onclick="closeCart()">×</button>
+    </div>
+    <div id="cartItems" class="cp-body"></div>
+    <div class="cp-footer">
+      <div class="cp-tot-row">
+        <span>Total estimado:</span>
+        <span id="cartTot">$0</span>
+      </div>
+      <div id="cartCnt" class="cp-not"></div>
+      <button id="waBtn" class="send-wa-btn" onclick="openForm()" disabled>
+        📲 Enviar pedido por WhatsApp
+      </button>
+    </div>
+  </div>
+
+  <!-- FORMULARIO CLIENTE -->
+  <div id="formOv" class="form-overlay">
+    <div class="form-box">
+      <h3>Datos de Envío</h3>
+      <div class="fg">
+        <label>Nombre y Apellido *</label>
+        <input type="text" id="cNom" placeholder="Tu nombre completo">
+      </div>
+      <div class="fg">
+        <label>Teléfono / WhatsApp *</label>
+        <input type="tel" id="cTel" placeholder="3001234567">
+      </div>
+      <div class="fg">
+        <label>Ciudad / Municipio</label>
+        <input type="text" id="cCiu" placeholder="Ej: Medellín">
+      </div>
+      <div class="fg">
+        <label>Tipo de pedido</label>
+        <select id="cTipo" disabled>
+          <option value="DETAL">Detal (Compra individual)</option>
+          <option value="MAYORISTA">Mayorista (6+ productos)</option>
+        </select>
+      </div>
+      <div class="fg">
+        <label>Notas adicionales (Opcional)</label>
+        <input type="text" id="cNot" placeholder="Color preferido, indicaciones...">
+      </div>
+      <div class="form-btns">
+        <button class="cancel-btn" onclick="closeForm()">Cancelar</button>
+        <button class="send-btn" onclick="sendWA()">Confirmar y enviar</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="toast" class="toast">✓ Producto agregado</div>
+
+<script>
+const WA_NUMBER = '573226114222';
+
+// ── URL DEL CSV DE GOOGLE SHEETS ──
+const CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTgWOSg5Ub4wdTTxW0Qlu7R6omDRWIlHuUvjNiBgOoCZrefBjjAvKongWEYnd5BuS8B3aoYY5Hf8BGb/pub?gid=1229897467&single=true&output=csv';
+
+let PRODUCTOS = [];
+let DRIVE_IMAGENES = {}; 
+let carrito = [], filtro = 'TODOS', busq = '', prodActual = null, varActual = 0, cantActual = 1, pag = 0;
+const POR_PAG = 32;
+const fmt = n => '$' + Math.round(n).toLocaleString('es-CO');
+const totalDif = () => carrito.length;
+const esMay = () => totalDif() >= 6;
+const precioItem = i => esMay() ? i.mayor : i.detal;
+const totalCart = () => carrito.reduce((s,i) => s + precioItem(i)*i.cantidad, 0);
+
+// ── OBTENER URL DE GOOGLE DRIVE ──
+function obtenerUrlDrive(nombreArchivo) {
+  if (!nombreArchivo) return '';
+  if (nombreArchivo.includes('drive.google.com') || nombreArchivo.includes('http')) {
+    const match = nombreArchivo.match(/id=([a-zA-Z0-9_-]+)/) || nombreArchivo.match(/\/d\/([a-zA-Z0-9_-]+)/);
+    if (match) return `https://lh3.googleusercontent.com/d/${match[1]}=s800`;
+    return nombreArchivo;
+  }
+  
+  const idLimpio = nombreArchivo.replace(/^CATALOGO\//i, '').replace(/\.(png|jpg|jpeg|webp)$/i, '').trim();
+  if (idLimpio.length > 20 && !idLimpio.includes(' ')) {
+    return `https://lh3.googleusercontent.com/d/${idLimpio}=s800`;
+  }
+  
+  const idMapped = DRIVE_IMAGENES[idLimpio] || DRIVE_IMAGENES[nombreArchivo];
+  if (idMapped) {
+    return `https://lh3.googleusercontent.com/d/${idMapped}=s800`;
+  }
+  
+  return '';
+}
+
+function obtenerImagen(ref, nombre) {
+  return '';
+}
+
+// ── PARSEAR LÍNEA CSV ──
+function parsearLineaCSV(linea) {
+  const resultado = [];
+  let dentro = false, campo = '';
+  for (let i = 0; i < linea.length; i++) {
+    const c = linea[i];
+    if (c === '"') { dentro = !dentro; }
+    else if (c === ',' && !dentro) { resultado.push(campo); campo = ''; }
+    else { campo += c; }
+  }
+  resultado.push(campo);
+  return resultado;
+}
+
+// ── PROCESAR PRODUCTOS Y AGRUPAR VARIANTES ──
+function procesarProductosYVariantes(lineas) {
+  const mapaProductos = {};
+
+  for (let i = 1; i < lineas.length; i++) {
+    const cols = parsearLineaCSV(lineas[i]);
+    if (!cols || cols.length < 9) continue;
+
+    const ref = (cols[1] || '').trim();          // Col B: Referencia
+    const nombre = (cols[2] || '').trim();       // Col C: Nombre Producto
+    const varianteRef = (cols[3] || '').trim();  // Col D: Variante / Opción
+    const rutaImagen = (cols[4] || '').trim();   // Col E: Ruta / ID Imagen
+    const categoria = (cols[5] || 'GENERAL').trim().toUpperCase(); // Col F: Categoría
+    const detal = parseFloat((cols[6] || '0').replace(/[^0-9.]/g,'')) || 0;  // Col G: Precio Detal
+    const mayor = parseFloat((cols[7] || '0').replace(/[^0-9.]/g,'')) || 0;  // Col H: Precio Mayor
+    const cant = parseInt((cols[8] || '0').replace(/[^0-9-]/g,'')) || 0;     // Col I: Stock Cantidad
+    const guia = (cols[9] || '').trim();         // Col J: Guía Cuidado
+
+    if (!nombre) continue;
+
+    const imgUrl = obtenerUrlDrive(rutaImagen) || obtenerImagen(ref, nombre);
+
+    if (!mapaProductos[nombre]) {
+      mapaProductos[nombre] = {
+        ref: ref,
+        nombre: nombre,
+        detal: detal,
+        mayor: mayor,
+        cantTotal: 0,
+        categoria: categoria,
+        guia: guia,
+        imagenPrincipal: imgUrl,
+        variantes: []
+      };
+    }
+
+    mapaProductos[nombre].cantTotal += cant;
+    mapaProductos[nombre].variantes.push({
+      refVariante: varianteRef || ref,
+      nombreVariante: varianteRef ? varianteRef : `Opción ${mapaProductos[nombre].variantes.length + 1}`,
+      imagen: imgUrl,
+      cant: cant
+    });
+  }
+
+  return Object.values(mapaProductos);
+}
+
+// ── CARGAR DATOS ──
+function cargarDatos() {
+  const loading = document.getElementById('loading');
+  if (loading) loading.style.display = 'flex';
+
+  fetch(CSV_URL)
+    .then(r => {
+      if (!r.ok) throw new Error('Error al conectar con la hoja de cálculo');
+      return r.text();
+    })
+    .then(texto => {
+      const lineas = texto.split('\n');
+      PRODUCTOS = procesarProductosYVariantes(lineas);
+      
+      const totElem = document.getElementById('totalProductos');
+      if (totElem) totElem.textContent = PRODUCTOS.length;
+      if (loading) loading.style.display = 'none';
+      renderGrid();
+    })
+    .catch(err => {
+      console.error(err);
+      if (loading) loading.style.display = 'none';
+      showToast('⚠️ Error al cargar los datos');
+    });
+}
+
+// ── RENDERIZAR GRID ──
+function renderGrid() {
+  const grid = document.getElementById('grid');
+  const noRes = document.getElementById('noRes');
+  if (!grid) return;
+  grid.innerHTML = '';
+
+  const busqNorm = busq.toLowerCase().trim();
+  const filtrados = PRODUCTOS.filter(p => {
+    const matchCat = (filtro === 'TODOS' || p.categoria === filtro);
+    const matchBusq = (!busqNorm || p.nombre.toLowerCase().includes(busqNorm) || p.ref.toLowerCase().includes(busqNorm));
+    return matchCat && matchBusq;
+  });
+
+  if (filtrados.length === 0) {
+    if (noRes) noRes.style.display = 'block';
+    return;
+  }
+  if (noRes) noRes.style.display = 'none';
+
+  const limite = (pag + 1) * POR_PAG;
+  const visibles = filtrados.slice(0, limite);
+
+  visibles.forEach(p => {
+    const card = document.createElement('div');
+    card.className = 'card';
+    card.onclick = () => openModal(p);
+
+    const agotado = p.cantTotal <= 0;
+    const badgeStock = agotado 
+      ? '<span class="stock-badge ago">Agotado</span>' 
+      : `<span class="stock-badge">${p.cantTotal} uds</span>`;
+
+    const imgTag = p.imagenPrincipal 
+      ? `<img src="${p.imagenPrincipal}" alt="${p.nombre}" loading="lazy" onerror="this.parentNode.innerHTML='<div class=\'ph\'>💄</div>'">`
+      : '<div class="ph">💄</div>';
+
+    card.innerHTML = `
+      <div class="card-img">
+        ${badgeStock}
+        ${imgTag}
+      </div>
+      <div class="card-body">
+        <div class="card-cat">${p.categoria}</div>
+        <div class="card-name">${p.nombre}</div>
+        <div class="card-prices">
+          <span class="price-d">${fmt(p.detal)}</span>
+          <span class="price-m">Mayor: ${fmt(p.mayor)}</span>
+        </div>
+        <button class="add-btn" ${agotado ? 'disabled' : ''}>
+          ${agotado ? 'Sin stock' : '+ Agregar'}
+        </button>
+      </div>
+    `;
+    grid.appendChild(card);
+  });
+
+  const loadWrap = document.getElementById('loadWrap');
+  if (loadWrap) {
+    loadWrap.style.display = (filtrados.length > limite) ? 'block' : 'none';
+  }
+}
+
+function loadMore() { pag++; renderGrid(); }
+
+function setFilter(cat, btn) {
+  filtro = cat;
+  pag = 0;
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  renderGrid();
+}
+
+const searchInput = document.getElementById('searchInput');
+if (searchInput) {
+  searchInput.addEventListener('input', (e) => {
+    busq = e.target.value;
+    pag = 0;
+    renderGrid();
+  });
+}
+
+// ── MODAL DE PRODUCTO Y VARIANTES ──
+function openModal(prod) {
+  prodActual = prod;
+  varActual = 0;
+  cantActual = 1;
+
+  document.getElementById('mCat').textContent = prod.categoria;
+  document.getElementById('mName').textContent = prod.nombre;
+  document.getElementById('mDetal').textContent = fmt(prod.detal);
+  document.getElementById('mMayor').textContent = fmt(prod.mayor);
+  document.getElementById('mQty').textContent = cantActual;
+
+  const mImg = document.getElementById('mImg');
+  const mPh = document.getElementById('mPh');
+  
+  if (prod.imagenPrincipal) {
+    mImg.src = prod.imagenPrincipal;
+    mImg.style.display = 'block';
+    mPh.style.display = 'none';
+  } else {
+    mImg.style.display = 'none';
+    mPh.style.display = 'flex';
+  }
+
+  const varSec = document.getElementById('varSec');
+  const varGrid = document.getElementById('varGrid');
+  if (varGrid) varGrid.innerHTML = '';
+
+  if (prod.variantes && prod.variantes.length > 1 && varSec && varGrid) {
+    varSec.style.display = 'block';
+    prod.variantes.forEach((v, idx) => {
+      const thumb = document.createElement('div');
+      thumb.className = `var-thumb ${idx === 0 ? 'sel' : ''}`;
+      thumb.onclick = (e) => {
+        e.stopPropagation();
+        selectVariant(idx);
+      };
+
+      if (v.imagen) {
+        thumb.innerHTML = `<img src="${v.imagen}" alt="Variante ${idx+1}" onerror="this.parentNode.innerHTML='<div class=\'vph\'>💄</div>'">`;
+      } else {
+        thumb.innerHTML = `<div class="vph">💄</div>`;
+      }
+      varGrid.appendChild(thumb);
+    });
+  } else if (varSec) {
+    varSec.style.display = 'none';
+  }
+
+  const guiaSec = document.getElementById('guiaSec');
+  if (guiaSec) {
+    if (prod.guia) {
+      const guiaUrl = obtenerUrlDrive(prod.guia);
+      const guiaImg = document.getElementById('guiaImg');
+      if (guiaImg) guiaImg.src = guiaUrl;
+      guiaSec.style.display = 'block';
+    } else {
+      guiaSec.style.display = 'none';
+    }
+  }
+
+  updateModalBtn();
+  document.getElementById('overlay').classList.add('open');
+}
+
+function selectVariant(idx) {
+  varActual = idx;
+  const variante = prodActual.variantes[idx];
+
+  const thumbs = document.querySelectorAll('.var-thumb');
+  thumbs.forEach((t, i) => {
+    if (i === idx) t.classList.add('sel');
+    else t.classList.remove('sel');
+  });
+
+  const mImg = document.getElementById('mImg');
+  const mPh = document.getElementById('mPh');
+  if (variante && variante.imagen) {
+    mImg.src = variante.imagen;
+    mImg.style.display = 'block';
+    mPh.style.display = 'none';
+  } else {
+    mImg.style.display = 'none';
+    mPh.style.display = 'flex';
+  }
+}
+
+function chgQty(delta) {
+  cantActual = Math.max(1, cantActual + delta);
+  document.getElementById('mQty').textContent = cantActual;
+  updateModalBtn();
+}
+
+function updateModalBtn() {
+  const addBtn = document.getElementById('addBtn');
+  const mHint = document.getElementById('mHint');
+  const agotado = prodActual.cantTotal <= 0;
+
+  if (addBtn) {
+    addBtn.disabled = agotado;
+    addBtn.textContent = agotado ? 'Sin stock disponible' : '🛒 Agregar al carrito';
+  }
+
+  if (mHint) {
+    mHint.style.display = (esMay() || cantActual >= 6) ? 'inline-block' : 'none';
+  }
+}
+
+function closeModal() { document.getElementById('overlay').classList.remove('open'); }
+function closeMO(e) { if (e.target.id === 'overlay') closeModal(); }
+
+// ── CARRITO Y WHATSAPP ──
+function addToCart() {
+  if (!prodActual || prodActual.cantTotal <= 0) return;
+
+  const varianteSel = prodActual.variantes[varActual] || {};
+  const itemCart = {
+    ref: varianteSel.refVariante || prodActual.ref,
+    nombre: prodActual.nombre,
+    varianteNombre: varianteSel.nombreVariante || 'Única',
+    imagen: varianteSel.imagen || prodActual.imagenPrincipal,
+    detal: prodActual.detal,
+    mayor: prodActual.mayor,
+    cantidad: cantActual
+  };
+
+  const idxExistente = carrito.findIndex(i => i.ref === itemCart.ref);
+  if (idxExistente > -1) {
+    carrito[idxExistente].cantidad += cantActual;
+  } else {
+    carrito.push(itemCart);
+  }
+
+  closeModal();
+  updateCartUI();
+  showToast('✓ Producto agregado al carrito');
+}
+
+function updateCartUI() {
+  const cartCount = document.getElementById('cartCount');
+  const cartItems = document.getElementById('cartItems');
+  const cartTot = document.getElementById('cartTot');
+  const cartCnt = document.getElementById('cartCnt');
+  const waBtn = document.getElementById('waBtn');
+
+  const totalPiezas = carrito.reduce((s, i) => s + i.cantidad, 0);
+  if (cartCount) cartCount.textContent = totalPiezas;
+  if (waBtn) waBtn.disabled = carrito.length === 0;
+
+  if (carrito.length === 0) {
+    if (cartItems) cartItems.innerHTML = `<div class="cart-empty"><div class="ico">🛒</div><p>Tu carrito está vacío</p></div>`;
+    if (cartTot) cartTot.textContent = '$0';
+    if (cartCnt) cartCnt.textContent = '';
+    return;
+  }
+
+  if (cartItems) {
+    cartItems.innerHTML = '';
+    carrito.forEach((item, index) => {
+      const ci = document.createElement('div');
+      ci.className = 'ci';
+      const precioUnit = precioItem(item);
+      const subtotal = precioUnit * item.cantidad;
+
+      ci.innerHTML = `
+        <img src="${item.imagen || ''}" alt="" onerror="this.style.display='none'">
+        <div class="ci-info">
+          <div class="ci-name">${item.nombre}</div>
+          <div class="ci-var">Ref: ${item.ref} (${item.varianteNombre}) ${esMay() ? '<span class="ci-may">Mayorista</span>' : ''}</div>
+          <div class="ci-row">
+            <button class="ci-qb" onclick="chgCartQty(${index}, -1)">−</button>
+            <span class="ci-q">${item.cantidad}</span>
+            <button class="ci-qb" onclick="chgCartQty(${index}, 1)">+</button>
+            <span class="ci-p">${fmt(subtotal)}</span>
+          </div>
+        </div>
+        <button class="ci-del" onclick="removeCartItem(${index})">🗑️</button>
+      `;
+      cartItems.appendChild(ci);
+    });
+  }
+
+  if (cartTot) cartTot.textContent = fmt(totalCart());
+  if (cartCnt) {
+    if (esMay()) {
+      cartCnt.textContent = '✨ ¡Felicidades! Tienes precio mayorista aplicado.';
+    } else {
+      const faltan = 6 - totalDif();
+      cartCnt.textContent = `Agrega ${faltan} producto(s) diferente(s) más para precio mayorista.`;
+    }
+  }
+}
+
+function chgCartQty(index, delta) {
+  carrito[index].cantidad += delta;
+  if (carrito[index].cantidad <= 0) carrito.splice(index, 1);
+  updateCartUI();
+}
+
+function removeCartItem(index) {
+  carrito.splice(index, 1);
+  updateCartUI();
+}
+
+function openCart() {
+  updateCartUI();
+  document.getElementById('cartOv').classList.add('open');
+  document.getElementById('cartPanel').classList.add('open');
+}
+function closeCart() {
+  document.getElementById('cartOv').classList.remove('open');
+  document.getElementById('cartPanel').classList.remove('open');
+}
+function closeCOv(e) { if (e.target.id === 'cartOv') closeCart(); }
+
+function openForm() {
+  if (carrito.length === 0) return;
+  document.getElementById('cTipo').value = esMay() ? 'MAYORISTA' : 'DETAL';
+  document.getElementById('formOv').classList.add('open');
+}
+function closeForm() { document.getElementById('formOv').classList.remove('open'); }
+
+function sendWA() {
+  const nom = document.getElementById('cNom').value.trim();
+  const tel = document.getElementById('cTel').value.trim();
+  const ciu = document.getElementById('cCiu').value.trim();
+  const not = document.getElementById('cNot').value.trim();
+
+  if (!nom || !tel) {
+    showToast('⚠️ Nombre y WhatsApp son obligatorios');
+    return;
+  }
+
+  let msg = `🛍️ *NUEVO PEDIDO - LALIS GLOW*\n\n`;
+  msg += `👤 *Cliente:* ${nom}\n`;
+  msg += `📱 *Teléfono:* ${tel}\n`;
+  if (ciu) msg += `📍 *Ciudad:* ${ciu}\n`;
+  msg += `🏷️ *Tipo:* ${esMay() ? 'MAYORISTA' : 'DETAL'}\n`;
+  if (not) msg += `📝 *Notas:* ${not}\n`;
+  msg += `\n───────────────\n*DETALLE DEL PEDIDO:*\n\n`;
+
+  carrito.forEach(i => {
+    const pUnit = precioItem(i);
+    msg += `• *${i.nombre}* (${i.varianteNombre})\n  Ref: ${i.ref} | Cant: ${i.cantidad} x ${fmt(pUnit)} = ${fmt(pUnit * i.cantidad)}\n`;
+  });
+
+  msg += `\n───────────────\n`;
+  msg += `💰 *TOTAL ESTIMADO:* ${fmt(totalCart())}\n\n`;
+  msg += `¡Hola! Quedo a la espera para confirmar disponibilidad y pago.`;
+
+  const url = `https://wa.me/${WA_NUMBER}?text=${encodeURIComponent(msg)}`;
+  window.open(url, '_blank');
+  closeForm();
+}
+
+function showToast(txt) {
+  const toast = document.getElementById('toast');
+  if (toast) {
+    toast.textContent = txt;
+    toast.classList.add('show');
+    setTimeout(() => toast.classList.remove('show'), 3000);
+  }
+}
+
+cargarDatos();
+</script>
+</body>
+</html>
