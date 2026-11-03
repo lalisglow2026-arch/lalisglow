@@ -620,6 +620,15 @@ async function cargarDatos() {
     return;
   }
   PRODUCTOS = lista;
+  // Diagnóstico: abre el catálogo con  #faltantes  al final del enlace para ver qué productos no tienen foto
+  if (location.hash === '#faltantes') {
+    const sin = lista.filter(p => !p.imagenPrincipal);
+    const caja = document.createElement('div');
+    caja.style.cssText = 'max-width:1200px;margin:16px auto;padding:16px;background:#fff;border:2px solid #d4707a;border-radius:12px;font-size:13px;line-height:1.6';
+    caja.innerHTML = '<b>Fotos en Drive: ' + Object.keys(DRIVE_IDX).length + ' · Productos sin foto: ' + sin.length + ' de ' + lista.length + '</b><br>' +
+      sin.map(p => '• ' + p.nombre + '  →  busqué: <i>' + p.nombre + '.png</i>').join('<br>');
+    document.querySelector('.grid-wrap').prepend(caja);
+  }
   document.getElementById('totalProductos').textContent = PRODUCTOS.filter(p => p.cantTotal > 0).length;
   document.getElementById('loading').style.display = 'none';
   renderGrid();
