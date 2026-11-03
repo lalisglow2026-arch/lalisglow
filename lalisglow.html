@@ -427,25 +427,27 @@ const IMAGENES = {
   "BASEKLM":"1afLNY4JQoqAQm80uTe"
 };
 
-function obtenerUrlDrive(nombreArchivo) {
-  if (!nombreArchivo) return '';
-  if (nombreArchivo.includes('drive.google.com') || nombreArchivo.includes('http')) {
-    const match = nombreArchivo.match(/id=([a-zA-Z0-9_-]+)/) || nombreArchivo.match(/\/d\/([a-zA-Z0-9_-]+)/);
-    if (match) return `https://lh3.googleusercontent.com/d/${match[1]}=s800`;
-    return nombreArchivo;
+const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwEO68unYkGmftMhqQsaU5tv9ChrK9hjerkmE__1GQcyroILmj-xlhutIX-pD9JGe2w/exec';
+let DRIVE_IDX = {};   // nombre de archivo normalizado -> ID de Drive
+let API_PROD = {};    // ref -> datos actuales (precio/stock) desde Apps Script
+const norm = s => String(s||'').normalize('NFC').trim().toLowerCase();
+const driveThumb = id => 'https://drive.google.com/thumbnail?sz=w800&id=' + id;
+const etiq = i => (i.varianteNombre && !/^(principal|única|unica)$/i.test(i.varianteNombre)) ? ' · ' + i.varianteNombre : '';
+
+function obtenerUrlDrive(ruta) {
+  if (!ruta) return '';
+  if (/^https?:/i.test(ruta)) {
+    const m = ruta.match(/[?&]id=([\w-]+)/) || ruta.match(/\/d\/([\w-]+)/);
+    return m ? driveThumb(m[1]) : ruta;
   }
-  const nombreLimpio = nombreArchivo.replace(/^CATALOGO\//i, '').trim();
-  const idDrive = DRIVE_IMAGENES[nombreLimpio] || DRIVE_IMAGENES[nombreArchivo];
-  if (idDrive) {
-    return `https://lh3.googleusercontent.com/d/${idDrive}=s800`;
-  }
-  return '';
+  const id = DRIVE_IDX[norm(ruta.replace(/^CATALOGO\//i,''))];
+  return id ? driveThumb(id) : '';
 }
 
 function obtenerImagen(ref, nombre) {
   const clave = (nombre || ref).toUpperCase().replace(/[^A-Z0-9]/g, '');
   for (let k in IMAGENES) {
-    if (clave.includes(k)) return `https://lh3.googleusercontent.com/d/${IMAGENES[k]}=s800`;
+    if (clave.includes(k)) return driveThumb(IMAGENES[k]);
   }
   return '';
 }
@@ -465,75 +467,75 @@ function parsearLineaCSV(linea) {
 
 // ── PROCESAR PRODUCTOS Y VARIANTES SEGÚN LAS COLUMNAS DE TU HOJA ──
 function procesarProductosYVariantes(lineas) {
-  const mapaProductos = {};
-
+  const mapa = {};
   for (let i = 1; i < lineas.length; i++) {
     const cols = parsearLineaCSV(lineas[i]);
     if (!cols || cols.length < 9) continue;
-
-    const ref = (cols[1] || '').trim();          // Columna B (Referencia)
-    const nombre = (cols[2] || '').trim();       // Columna C (Producto)
-    const varianteRef = (cols[3] || '').trim();  // Columna D (Variante / Opción)
-    const rutaImagen = (cols[4] || '').trim();   // Columna E (Imagen)
-    const categoria = (cols[5] || 'GENERAL').trim().toUpperCase(); // Columna F (Categoría)
-    const detal = parseFloat((cols[6] || '0').replace(/[^0-9.]/g,'')) || 0;  // Columna G (Detal)
-    const mayor = parseFloat((cols[7] || '0').replace(/[^0-9.]/g,'')) || 0;  // Columna H (Mayor)
-    const cant = parseInt((cols[8] || '0').replace(/[^0-9-]/g,'')) || 0;     // Columna I (Cantidad)
-    const guia = (cols[9] || '').trim();         // Columna J (Guía de cuidado)
-
-    if (!nombre) continue;
+    const ref = (cols[1] || '').trim();
+    const nombre = (cols[2] || '').trim();
+    const varianteTxt = (cols[3] || '').trim();
+    const rutaImagen = (cols[4] || '').trim();
+    const categoria = (cols[5] || 'GENERAL').trim().toUpperCase();
+    const detal = parseFloat((cols[6] || '0').replace(/[^0-9.]/g,'')) || 0;
+    const mayor = parseFloat((cols[7] || '0').replace(/[^0-9.]/g,'')) || 0;
+    const cant = parseInt((cols[8] || '0').replace(/[^0-9-]/g,'')) || 0;
+    const guia = (cols[9] || '').trim();
+    if (!nombre || !ref) continue;
 
     const imgUrl = obtenerUrlDrive(rutaImagen) || obtenerImagen(ref, nombre);
-
-    if (!mapaProductos[nombre]) {
-      mapaProductos[nombre] = {
-        ref: ref,
-        nombre: nombre,
-        detal: detal,
-        mayor: mayor,
-        cantTotal: 0,
-        categoria: categoria,
-        guia: guia,
-        imagenPrincipal: imgUrl,
-        variantes: []
-      };
+    if (!mapa[ref]) {
+      mapa[ref] = { ref, nombre, detal, mayor, cantTotal: 0, categoria, guia: '', imagenPrincipal: imgUrl, variantes: [] };
     }
-
-    mapaProductos[nombre].cantTotal += cant;
-    mapaProductos[nombre].variantes.push({
-      refVariante: varianteRef || ref,
-      nombreVariante: varianteRef ? varianteRef : `Opción ${mapaProductos[nombre].variantes.length + 1}`,
+    const p = mapa[ref];
+    if (!p.guia && guia) p.guia = guia;
+    if (!p.imagenPrincipal && imgUrl) p.imagenPrincipal = imgUrl;
+    p.cantTotal = Math.max(p.cantTotal, cant);   // el stock se repite en cada fila de variante: NO se suma
+    p.variantes.push({
+      refVariante: ref,
+      nombreVariante: varianteTxt || ('Opción ' + (p.variantes.length + 1)),
       imagen: imgUrl,
       cant: cant
     });
   }
-
-  return Object.values(mapaProductos);
+  const lista = Object.values(mapa);
+  // Precios y stock actuales desde INVENTARIO_DISPONIBLE (vía Apps Script)
+  lista.forEach(p => {
+    const a = API_PROD[p.ref];
+    if (a) {
+      if (a.detal > 0) p.detal = a.detal;
+      if (a.mayor > 0) p.mayor = a.mayor;
+      if (typeof a.cant === 'number') p.cantTotal = a.cant;
+    }
+    if (!p.imagenPrincipal && p.variantes[0]) p.imagenPrincipal = p.variantes[0].imagen;
+  });
+  return lista;
 }
 
 // ── CARGAR DATOS ──
-function cargarDatos() {
+async function cargarDatos() {
   document.getElementById('loading').style.display = 'flex';
   document.getElementById('errorBox').style.display = 'none';
-
-  fetch(CSV_URL)
-    .then(r => {
-      if (!r.ok) throw new Error('Error al conectar con la hoja de cálculo');
-      return r.text();
-    })
-    .then(texto => {
-      const lineas = texto.split('\n');
-      PRODUCTOS = procesarProductosYVariantes(lineas);
-      
-      document.getElementById('totalProductos').textContent = PRODUCTOS.length;
-      document.getElementById('loading').style.display = 'none';
-      renderGrid();
-    })
-    .catch(err => {
-      console.error(err);
-      document.getElementById('loading').style.display = 'none';
-      document.getElementById('errorBox').style.display = 'block';
-    });
+  const [rImg, rProd, rCsv] = await Promise.allSettled([
+    fetch(APPS_SCRIPT_URL + '?action=imagenes').then(r => r.json()),
+    fetch(APPS_SCRIPT_URL).then(r => r.json()),
+    fetch(CSV_URL).then(r => { if (!r.ok) throw new Error('CSV'); return r.text(); })
+  ]);
+  if (rImg.status === 'fulfilled' && rImg.value && !rImg.value.error) {
+    Object.keys(rImg.value).forEach(k => { DRIVE_IDX[norm(k)] = rImg.value[k]; });
+  }
+  if (rProd.status === 'fulfilled' && Array.isArray(rProd.value)) {
+    rProd.value.forEach(p => { API_PROD[String(p.ref).trim()] = p; });
+  }
+  if (rCsv.status !== 'fulfilled') {
+    console.error(rCsv.reason);
+    document.getElementById('loading').style.display = 'none';
+    document.getElementById('errorBox').style.display = 'block';
+    return;
+  }
+  PRODUCTOS = procesarProductosYVariantes(rCsv.value.split('\n'));
+  document.getElementById('totalProductos').textContent = PRODUCTOS.filter(p => p.cantTotal > 0).length;
+  document.getElementById('loading').style.display = 'none';
+  renderGrid();
 }
 
 // ── RENDERIZAR GRID ──
@@ -655,7 +657,7 @@ function openModal(prod) {
       };
 
       if (v.imagen) {
-        thumb.innerHTML = `<img src="${v.imagen}" alt="Variante ${idx+1}" onerror="this.parentNode.innerHTML='<div class=\'vph\'>💄</div>'">`;
+        thumb.innerHTML = `<img src="${v.imagen}" alt="${v.nombreVariante}" title="${v.nombreVariante}" onerror="this.parentNode.innerHTML='<div class=\'vph\'>💄</div>'">`;
       } else {
         thumb.innerHTML = `<div class="vph">💄</div>`;
       }
@@ -668,8 +670,14 @@ function openModal(prod) {
   const guiaSec = document.getElementById('guiaSec');
   if (prod.guia) {
     const guiaUrl = obtenerUrlDrive(prod.guia);
-    document.getElementById('guiaImg').src = guiaUrl;
-    guiaSec.style.display = 'block';
+    if (guiaUrl) {
+      const gi = document.getElementById('guiaImg');
+      gi.onerror = () => { guiaSec.style.display = 'none'; };
+      gi.src = guiaUrl;
+      guiaSec.style.display = 'block';
+    } else {
+      guiaSec.style.display = 'none';
+    }
   } else {
     guiaSec.style.display = 'none';
   }
@@ -682,6 +690,8 @@ function selectVariant(idx) {
   varActual = idx;
   const variante = prodActual.variantes[idx];
 
+  const mN = document.getElementById('mName');
+  if (mN && variante) mN.textContent = prodActual.nombre + (variante.nombreVariante && !/^(principal|única|unica)$/i.test(variante.nombreVariante) ? ' · ' + variante.nombreVariante : '');
   const thumbs = document.querySelectorAll('.var-thumb');
   thumbs.forEach((t, i) => {
     if (i === idx) t.classList.add('sel');
@@ -734,7 +744,8 @@ function addToCart() {
 
   const varianteSel = prodActual.variantes[varActual] || {};
   const itemCart = {
-    ref: varianteSel.refVariante || prodActual.ref,
+    ref: prodActual.ref,
+    clave: prodActual.ref + '|' + (varianteSel.nombreVariante || ''),
     nombre: prodActual.nombre,
     varianteNombre: varianteSel.nombreVariante || 'Única',
     imagen: varianteSel.imagen || prodActual.imagenPrincipal,
@@ -743,7 +754,7 @@ function addToCart() {
     cantidad: cantActual
   };
 
-  const idxExistente = carrito.findIndex(i => i.ref === itemCart.ref);
+  const idxExistente = carrito.findIndex(i => i.clave === itemCart.clave);
   if (idxExistente > -1) {
     carrito[idxExistente].cantidad += cantActual;
   } else {
@@ -783,7 +794,7 @@ function updateCartUI() {
     ci.innerHTML = `
       <img src="${item.imagen || ''}" alt="" onerror="this.style.display='none'">
       <div class="ci-info">
-        <div class="ci-name">${item.nombre}</div>
+        <div class="ci-name">${item.nombre}${etiq(item)}</div>
         <div class="ci-var">Ref: ${item.ref} ${esMay() ? '<span class="ci-may">Mayorista</span>' : ''}</div>
         <div class="ci-row">
           <button class="ci-qb" onclick="chgCartQty(${index}, -1)">−</button>
@@ -856,7 +867,7 @@ function sendWA() {
 
   carrito.forEach(i => {
     const pUnit = precioItem(i);
-    msg += `• *${i.nombre}*\n  Ref: ${i.ref} | Cant: ${i.cantidad} x ${fmt(pUnit)} = ${fmt(pUnit * i.cantidad)}\n`;
+    msg += `• *${i.nombre}${etiq(i)}*\n  Ref: ${i.ref} | Cant: ${i.cantidad} x ${fmt(pUnit)} = ${fmt(pUnit * i.cantidad)}\n`;
   });
 
   msg += `\n───────────────\n`;
