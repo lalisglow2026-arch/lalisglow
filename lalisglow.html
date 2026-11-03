@@ -404,10 +404,9 @@ header {
 const WA_NUMBER = '573226114222';
 
 // ── URL DEL CSV DE GOOGLE SHEETS (CATALOGO) ──
-const CSV_URLS = [
-  'https://docs.google.com/spreadsheets/d/e/2PACX-1vTgWOSg5Ub4wdTTxW0Qlu7R6omDRWIlHuUvjNiBgOoCZrefBjjAvKongWEYnd5BuS8B3aoYY5Hf8BGb/pub?gid=1229897467&single=true&output=csv',
-  'https://docs.google.com/spreadsheets/d/e/2PACX-1vTgWOSg5Ub4wdTTxW0Qlu7R6omDRWIlHuUvjNiBgOoCZrefBjjAvKongWEYnd5BuS8B3aoYY5Hf8BGb/pub?gid=1229897467&single=true&output=csv'
-];
+const CSV_URLS = ['https://docs.google.com/spreadsheets/d/e/2PACX-1vTgWOSg5Ub4wdTTxW0Qlu7R6omDRWIlHuUvjNiBgOoCZrefBjjAvKongWEYnd5BuS8B3aoYY5Hf8BGb/pub?gid=1229897467&single=true&output=csv',
+  'https://docs.google.com/spreadsheets/d/e/2PACX-1vTgWOSg5Ub4wdTTxW0Qlu7R6omDRWllHuUvjNiBgOoCZrefBjjAvKongWEYnd5BuS8B3aoYY5Hf8BGb/pub?gid=1229897467&single=true&output=csv'];
+const CSV_URL = CSV_URLS[0];
 
 let PRODUCTOS = [];
 let DRIVE_IMAGENES = {}; 
@@ -431,8 +430,8 @@ const IMAGENES = {
 };
 
 const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwEO68unYkGmftMhqQsaU5tv9ChrK9hjerkmE__1GQcyroILmj-xlhutIX-pD9JGe2w/exec';
-let DRIVE_IDX = {};   
-let API_PROD = {};    
+let DRIVE_IDX = {};   // nombre de archivo normalizado -> ID de Drive
+let API_PROD = {};    // ref -> datos actuales (precio/stock) desde Apps Script
 const norm = s => String(s||'').normalize('NFC').trim().toLowerCase();
 const driveThumb = id => 'https://drive.google.com/thumbnail?sz=w800&id=' + id;
 const etiq = i => (i.varianteNombre && !/^(principal|única|unica)$/i.test(i.varianteNombre)) ? ' · ' + i.varianteNombre : '';
@@ -468,8 +467,10 @@ function parsearLineaCSV(linea) {
   return resultado;
 }
 
+// ── PROCESAR PRODUCTOS Y VARIANTES SEGÚN LAS COLUMNAS DE TU HOJA ──
 function procesarProductosYVariantes(lineas) {
   const mapa = {};
+  // Detectar columnas por el encabezado (tolerante a cambios de orden); si no se reconoce, usar posiciones fijas
   const quitar = t => String(t||'').normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^A-Za-z0-9_]/g,'').toUpperCase();
   let idx = {ref:1, nombre:2, variante:3, imagen:4, categoria:5, detal:6, mayor:7, cant:8, guia:9};
   let inicio = 0;
@@ -508,7 +509,7 @@ function procesarProductosYVariantes(lineas) {
     const p = mapa[ref];
     if (!p.guia && guia) p.guia = guia;
     if (!p.imagenPrincipal && imgUrl) p.imagenPrincipal = imgUrl;
-    p.cantTotal = Math.max(p.cantTotal, cant);
+    p.cantTotal = Math.max(p.cantTotal, cant);   // el stock se repite en cada fila de variante: NO se suma
     p.variantes.push({
       refVariante: ref,
       nombreVariante: varianteTxt || ('Opción ' + (p.variantes.length + 1)),
@@ -517,6 +518,7 @@ function procesarProductosYVariantes(lineas) {
     });
   }
   const lista = Object.values(mapa);
+  // Precios y stock actuales desde INVENTARIO_DISPONIBLE (vía Apps Script)
   lista.forEach(p => {
     const a = API_PROD[p.ref];
     if (a) {
@@ -529,6 +531,7 @@ function procesarProductosYVariantes(lineas) {
   return lista;
 }
 
+// Respaldo: si la hoja de estilos no llega, armar el catálogo con los productos del Apps Script
 function productosDesdeApi() {
   return Object.values(API_PROD).map(a => {
     const img = obtenerUrlDrive(a.imagen) || obtenerUrlDrive(String(a.nombre||'').trim() + '.png') || obtenerImagen(a.ref, a.nombre);
@@ -538,8 +541,20 @@ function productosDesdeApi() {
   });
 }
 
+// ── CARGAR DATOS ──
+// Prueba cada dirección del CSV hasta que una responda con datos reales (no una página HTML)
 async function leerCSV() {
   let ultimo;
+  // 1) Primero desde el Apps Script (acción ?action=estilos), que lee la hoja ESTILOS Y PRODUCTOS directamente
+  try {
+    const r0 = await fetch(APPS_SCRIPT_URL + '?action=estilos');
+    const j = await r0.json();
+    if (Array.isArray(j) && j.length > 1) {
+      return j.map(f => f.map(c => '"' + String(c == null ? '' : c).replace(/"/g, '') + '"').join(',')).join('\n');
+    }
+    throw new Error('estilos sin datos' + (j && j.error ? ': ' + j.error : ''));
+  } catch (e) { ultimo = e; console.warn('Estilos vía Apps Script no disponibles:', e.message); }
+  // 2) Respaldo: CSV publicado
   for (const url of CSV_URLS) {
     try {
       const r = await fetch(url);
@@ -562,16 +577,16 @@ async function cargarDatos() {
   ]);
   if (rImg.status === 'fulfilled' && rImg.value && !rImg.value.error) {
     Object.keys(rImg.value).forEach(k => { DRIVE_IDX[norm(k)] = rImg.value[k]; });
-  }
+  } else { console.warn('Mapa de imágenes no disponible', rImg.reason || rImg.value); }
   if (rProd.status === 'fulfilled' && Array.isArray(rProd.value)) {
     rProd.value.forEach(p => { API_PROD[String(p.ref).trim()] = p; });
-  }
+  } else { console.warn('Productos del Apps Script no disponibles', rProd.reason || rProd.value); }
 
   let lista = [];
   if (rCsv.status === 'fulfilled') {
     try { lista = procesarProductosYVariantes(rCsv.value.split('\n')); } catch (e) { console.error(e); }
-  }
-  if (!lista.length) lista = productosDesdeApi();
+  } else { console.warn('CSV no disponible', rCsv.reason); }
+  if (!lista.length) lista = productosDesdeApi();   // respaldo
 
   if (!lista.length) {
     document.getElementById('loading').style.display = 'none';
@@ -584,6 +599,7 @@ async function cargarDatos() {
   renderGrid();
 }
 
+// ── RENDERIZAR GRID ──
 function renderGrid() {
   const grid = document.getElementById('grid');
   const noRes = document.getElementById('noRes');
@@ -663,6 +679,7 @@ document.getElementById('searchInput').addEventListener('input', (e) => {
   renderGrid();
 });
 
+// ── MODAL ──
 function openModal(prod) {
   prodActual = prod;
   varActual = 0;
@@ -782,6 +799,7 @@ function updateModalBtn() {
 function closeModal() { document.getElementById('overlay').classList.remove('open'); }
 function closeMO(e) { if (e.target.id === 'overlay') closeModal(); }
 
+// ── CARRITO Y WHATSAPP ──
 function addToCart() {
   if (!prodActual || prodActual.cantTotal <= 0) return;
 
@@ -931,5 +949,3 @@ function showToast(txt) {
 
 cargarDatos();
 </script>
-</body>
-</html>
