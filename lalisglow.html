@@ -646,7 +646,7 @@ async function cargarDatos() {
       return archivos.map(f => ({ f, n: toks(f).filter(w => a.indexOf(w) > -1).length }))
         .filter(x => x.n >= 2).sort((x, y) => y.n - x.n).slice(0, 3).map(x => x.f);
     };
-    caja.innerHTML = '<b>Versión 9 · Fotos en Drive: ' + archivos.length + ' · Productos sin foto: ' + sin.length + ' de ' + lista.length + '</b><br>' +
+    caja.innerHTML = '<b>Versión 10 · Fotos en Drive: ' + archivos.length + ' · Productos sin foto: ' + sin.length + ' de ' + lista.length + '</b><br>' +
       sin.map(p => '• <b>' + p.nombre + '</b><br>&nbsp;&nbsp;&nbsp;archivos parecidos en Drive: ' + (parecidos(p.nombre).join(' &nbsp;|&nbsp; ') || '<i>ninguno</i>')).join('<br>');
     document.querySelector('.grid-wrap').prepend(caja);
   }
@@ -665,7 +665,9 @@ function renderGrid() {
   const filtrados = PRODUCTOS.filter(p => {
     const matchCat = (filtro === 'TODOS' || p.categoria === filtro);
     const matchBusq = (!busqNorm || p.nombre.toLowerCase().includes(busqNorm) || p.ref.toLowerCase().includes(busqNorm));
-    return matchCat && matchBusq;
+    // Solo se muestran productos con foto Y con inventario (agrega #todos al enlace para verlos todos)
+    const visible = (location.hash === '#todos') || (p.cantTotal > 0 && !!p.imagenPrincipal);
+    return matchCat && matchBusq && visible;
   });
 
   if (filtrados.length === 0) {
