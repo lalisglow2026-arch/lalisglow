@@ -639,8 +639,15 @@ async function cargarDatos() {
     const sin = lista.filter(p => !p.imagenPrincipal);
     const caja = document.createElement('div');
     caja.style.cssText = 'max-width:1200px;margin:16px auto;padding:16px;background:#fff;border:2px solid #d4707a;border-radius:12px;font-size:13px;line-height:1.6';
-    caja.innerHTML = '<b>Fotos en Drive: ' + Object.keys(DRIVE_IDX).length + ' · Productos sin foto: ' + sin.length + ' de ' + lista.length + '</b><br>' +
-      sin.map(p => '• ' + p.nombre + '  →  busqué: <i>' + p.nombre + '.png</i>').join('<br>');
+    const archivos = Object.keys(DRIVE_IDX);
+    const toks = t => baseKey(t).split(' ').filter(w => w.length > 2);
+    const parecidos = nombre => {
+      const a = toks(nombre);
+      return archivos.map(f => ({ f, n: toks(f).filter(w => a.indexOf(w) > -1).length }))
+        .filter(x => x.n >= 2).sort((x, y) => y.n - x.n).slice(0, 3).map(x => x.f);
+    };
+    caja.innerHTML = '<b>Versión 9 · Fotos en Drive: ' + archivos.length + ' · Productos sin foto: ' + sin.length + ' de ' + lista.length + '</b><br>' +
+      sin.map(p => '• <b>' + p.nombre + '</b><br>&nbsp;&nbsp;&nbsp;archivos parecidos en Drive: ' + (parecidos(p.nombre).join(' &nbsp;|&nbsp; ') || '<i>ninguno</i>')).join('<br>');
     document.querySelector('.grid-wrap').prepend(caja);
   }
   document.getElementById('totalProductos').textContent = PRODUCTOS.filter(p => p.cantTotal > 0).length;
