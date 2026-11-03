@@ -436,13 +436,28 @@ const norm = s => String(s||'').normalize('NFC').trim().toLowerCase();
 const driveThumb = id => 'https://drive.google.com/thumbnail?sz=w800&id=' + id;
 const etiq = i => (i.varianteNombre && !/^(principal|única|unica)$/i.test(i.varianteNombre)) ? ' · ' + i.varianteNombre : '';
 
+let DRIVE_BASE = {};  // nombre sin acentos/mayúsculas/extensión (conserva el número entre paréntesis) -> ID
+const baseKey = t => String(t||'').normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase()
+  .replace(/\.(png|jpe?g|webp)$/i,'').replace(/[^a-z0-9]+/g,' ').trim();
+function construirIndice(mapa) {
+  DRIVE_IDX = {}; DRIVE_BASE = {};
+  Object.keys(mapa).forEach(k => {
+    DRIVE_IDX[norm(k)] = mapa[k];
+    const b = baseKey(k);
+    if (b && !DRIVE_BASE[b]) DRIVE_BASE[b] = mapa[k];
+  });
+}
+function buscarIdDrive(ruta) {
+  const limpio = String(ruta||'').replace(/^CATALOGO\//i,'');
+  return DRIVE_IDX[norm(limpio)] || DRIVE_BASE[baseKey(limpio)] || '';   // solo coincidencias exactas (sin acentos/mayúsculas)
+}
 function obtenerUrlDrive(ruta) {
   if (!ruta) return '';
   if (/^https?:/i.test(ruta)) {
     const m = ruta.match(/[?&]id=([\w-]+)/) || ruta.match(/\/d\/([\w-]+)/);
     return m ? driveThumb(m[1]) : ruta;
   }
-  const id = DRIVE_IDX[norm(ruta.replace(/^CATALOGO\//i,''))];
+  const id = buscarIdDrive(ruta);
   return id ? driveThumb(id) : '';
 }
 
@@ -502,7 +517,10 @@ function procesarProductosYVariantes(lineas) {
     const cant = parseInt(g(cols, idx.cant).replace(/[^0-9-]/g,'')) || 0;
     const guia = g(cols, idx.guia);
 
-    const imgUrl = obtenerUrlDrive(rutaImagen) || obtenerImagen(ref, nombre);
+    const esPrincipal = /^(principal|única|unica)?$/i.test(varianteTxt);
+    const imgUrl = esPrincipal
+      ? (obtenerUrlDrive(nombre + '.png') || obtenerUrlDrive(rutaImagen) || obtenerImagen(ref, nombre))
+      : (obtenerUrlDrive(rutaImagen) || '');
     if (!mapa[ref]) {
       mapa[ref] = { ref, nombre, detal, mayor, cantTotal: 0, categoria, guia: '', imagenPrincipal: imgUrl, variantes: [] };
     }
@@ -518,6 +536,14 @@ function procesarProductosYVariantes(lineas) {
     });
   }
   const lista = Object.values(mapa);
+  lista.forEach(p => {
+    const vistas = {};
+    const conFoto = p.variantes.filter(v => v.imagen);
+    if (conFoto.length) {
+      p.variantes = conFoto.filter(v => (vistas[v.imagen] ? false : (vistas[v.imagen] = true)));
+      p.variantes.forEach((v, i) => { v.nombreVariante = v.nombreVariante.replace(/^Variante\s*\d+$/i, 'Estilo ' + (i + 1)); });
+    }
+  });
   // Precios y stock actuales desde INVENTARIO_DISPONIBLE (vía Apps Script)
   lista.forEach(p => {
     const a = API_PROD[p.ref];
@@ -526,7 +552,7 @@ function procesarProductosYVariantes(lineas) {
       if (a.mayor > 0) p.mayor = a.mayor;
       if (typeof a.cant === 'number') p.cantTotal = a.cant;
     }
-    if (!p.imagenPrincipal && p.variantes[0]) p.imagenPrincipal = p.variantes[0].imagen;
+    if (!p.imagenPrincipal) { const v = p.variantes.find(x => x.imagen); if (v) p.imagenPrincipal = v.imagen; }
   });
   return lista;
 }
@@ -576,7 +602,7 @@ async function cargarDatos() {
     leerCSV()
   ]);
   if (rImg.status === 'fulfilled' && rImg.value && !rImg.value.error) {
-    Object.keys(rImg.value).forEach(k => { DRIVE_IDX[norm(k)] = rImg.value[k]; });
+    construirIndice(rImg.value);
   } else { console.warn('Mapa de imágenes no disponible', rImg.reason || rImg.value); }
   if (rProd.status === 'fulfilled' && Array.isArray(rProd.value)) {
     rProd.value.forEach(p => { API_PROD[String(p.ref).trim()] = p; });
