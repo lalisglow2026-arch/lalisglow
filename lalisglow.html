@@ -436,15 +436,19 @@ const norm = s => String(s||'').normalize('NFC').trim().toLowerCase();
 const driveThumb = id => 'https://drive.google.com/thumbnail?sz=w800&id=' + id;
 const etiq = i => (i.varianteNombre && !/^(principal|única|unica)$/i.test(i.varianteNombre)) ? ' · ' + i.varianteNombre : '';
 
+let DRIVE_LOOSE = {}; // nombre sin acentos, sin espacios y sin (n) -> ID (solo para productos que no encontraron foto)
 let DRIVE_BASE = {};  // nombre sin acentos/mayúsculas/extensión (conserva el número entre paréntesis) -> ID
 const baseKey = t => String(t||'').normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase()
   .replace(/\.(png|jpe?g|webp)$/i,'').replace(/[^a-z0-9]+/g,' ').trim();
+const looseKey = t => baseKey(String(t||'').replace(/\(\s*\d+\s*\)/g,' ')).replace(/\s+/g,'');
 function construirIndice(mapa) {
-  DRIVE_IDX = {}; DRIVE_BASE = {};
+  DRIVE_IDX = {}; DRIVE_BASE = {}; DRIVE_LOOSE = {};
   Object.keys(mapa).forEach(k => {
     DRIVE_IDX[norm(k)] = mapa[k];
     const b = baseKey(k);
     if (b && !DRIVE_BASE[b]) DRIVE_BASE[b] = mapa[k];
+    const l = looseKey(k);
+    if (l && !DRIVE_LOOSE[l]) DRIVE_LOOSE[l] = mapa[k];
   });
 }
 function buscarIdDrive(ruta) {
@@ -542,6 +546,16 @@ function procesarProductosYVariantes(lineas) {
     if (conFoto.length) {
       p.variantes = conFoto.filter(v => (vistas[v.imagen] ? false : (vistas[v.imagen] = true)));
       p.variantes.forEach((v, i) => { v.nombreVariante = v.nombreVariante.replace(/^Variante\s*\d+$/i, 'Estilo ' + (i + 1)); });
+    }
+  });
+  // Productos sin foto: buscar por nombre ignorando espacios y el "(2)" del archivo
+  lista.forEach(p => {
+    if (p.variantes.some(v => v.imagen)) return;
+    const id = DRIVE_LOOSE[looseKey(p.nombre)];
+    if (id) {
+      const u = driveThumb(id);
+      p.imagenPrincipal = u;
+      p.variantes = [Object.assign({}, p.variantes[0], { imagen: u })];
     }
   });
   // Precios y stock actuales desde INVENTARIO_DISPONIBLE (vía Apps Script)
