@@ -468,19 +468,37 @@ function parsearLineaCSV(linea) {
 // ── PROCESAR PRODUCTOS Y VARIANTES SEGÚN LAS COLUMNAS DE TU HOJA ──
 function procesarProductosYVariantes(lineas) {
   const mapa = {};
-  for (let i = 1; i < lineas.length; i++) {
+  // Detectar columnas por el encabezado (tolerante a cambios de orden); si no se reconoce, usar posiciones fijas
+  const quitar = t => String(t||'').normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^A-Za-z0-9_]/g,'').toUpperCase();
+  let idx = {ref:1, nombre:2, variante:3, imagen:4, categoria:5, detal:6, mayor:7, cant:8, guia:9};
+  let inicio = 0;
+  for (let h = 0; h < Math.min(lineas.length, 5); h++) {
+    const hc = parsearLineaCSV(lineas[h]).map(quitar);
+    if (hc.includes('REFERENCIA') && hc.includes('PRODUCTO')) {
+      const f = n => hc.indexOf(n);
+      idx = { ref:f('REFERENCIA'), nombre:f('PRODUCTO'), variante:f('VARIANTE'), imagen:f('IMAGEN'),
+              categoria:f('CATEGORIA'), detal:f('PRECIO_DETAL'), mayor:f('PRECIO_MAYORISTA'),
+              cant:f('CANT_DISPONIBLE'), guia:f('GUIA_CUIDADO') };
+      inicio = h + 1;
+      break;
+    }
+  }
+  const g = (cols, i) => (i >= 0 && i < cols.length) ? String(cols[i] || '').trim() : '';
+  const num = t => parseFloat(String(t||'0').replace(/[^0-9.]/g,'')) || 0;
+
+  for (let i = inicio || 1; i < lineas.length; i++) {
+    if (!lineas[i] || !lineas[i].trim()) continue;
     const cols = parsearLineaCSV(lineas[i]);
-    if (!cols || cols.length < 9) continue;
-    const ref = (cols[1] || '').trim();
-    const nombre = (cols[2] || '').trim();
-    const varianteTxt = (cols[3] || '').trim();
-    const rutaImagen = (cols[4] || '').trim();
-    const categoria = (cols[5] || 'GENERAL').trim().toUpperCase();
-    const detal = parseFloat((cols[6] || '0').replace(/[^0-9.]/g,'')) || 0;
-    const mayor = parseFloat((cols[7] || '0').replace(/[^0-9.]/g,'')) || 0;
-    const cant = parseInt((cols[8] || '0').replace(/[^0-9-]/g,'')) || 0;
-    const guia = (cols[9] || '').trim();
-    if (!nombre || !ref) continue;
+    const nombre = g(cols, idx.nombre);
+    const ref = g(cols, idx.ref) || nombre;
+    if (!nombre) continue;
+    const varianteTxt = g(cols, idx.variante);
+    const rutaImagen = g(cols, idx.imagen);
+    const categoria = (g(cols, idx.categoria) || 'GENERAL').toUpperCase();
+    const detal = num(g(cols, idx.detal));
+    const mayor = num(g(cols, idx.mayor));
+    const cant = parseInt(g(cols, idx.cant).replace(/[^0-9-]/g,'')) || 0;
+    const guia = g(cols, idx.guia);
 
     const imgUrl = obtenerUrlDrive(rutaImagen) || obtenerImagen(ref, nombre);
     if (!mapa[ref]) {
@@ -511,6 +529,16 @@ function procesarProductosYVariantes(lineas) {
   return lista;
 }
 
+// Respaldo: si la hoja de estilos no llega, armar el catálogo con los productos del Apps Script
+function productosDesdeApi() {
+  return Object.values(API_PROD).map(a => {
+    const img = obtenerUrlDrive(a.imagen) || (a.imagen || '') || obtenerImagen(a.ref, a.nombre);
+    return { ref: a.ref, nombre: a.nombre, detal: a.detal||0, mayor: a.mayor||0, cantTotal: a.cant||0,
+             categoria: (a.categoria || 'GENERAL').toUpperCase(), guia: a.guia || '', imagenPrincipal: img,
+             variantes: [{ refVariante: a.ref, nombreVariante: 'Principal', imagen: img, cant: a.cant||0 }] };
+  });
+}
+
 // ── CARGAR DATOS ──
 async function cargarDatos() {
   document.getElementById('loading').style.display = 'flex';
@@ -518,21 +546,27 @@ async function cargarDatos() {
   const [rImg, rProd, rCsv] = await Promise.allSettled([
     fetch(APPS_SCRIPT_URL + '?action=imagenes').then(r => r.json()),
     fetch(APPS_SCRIPT_URL).then(r => r.json()),
-    fetch(CSV_URL).then(r => { if (!r.ok) throw new Error('CSV'); return r.text(); })
+    fetch(CSV_URL).then(r => { if (!r.ok) throw new Error('CSV ' + r.status); return r.text(); })
   ]);
   if (rImg.status === 'fulfilled' && rImg.value && !rImg.value.error) {
     Object.keys(rImg.value).forEach(k => { DRIVE_IDX[norm(k)] = rImg.value[k]; });
-  }
+  } else { console.warn('Mapa de imágenes no disponible', rImg.reason || rImg.value); }
   if (rProd.status === 'fulfilled' && Array.isArray(rProd.value)) {
     rProd.value.forEach(p => { API_PROD[String(p.ref).trim()] = p; });
-  }
-  if (rCsv.status !== 'fulfilled') {
-    console.error(rCsv.reason);
+  } else { console.warn('Productos del Apps Script no disponibles', rProd.reason || rProd.value); }
+
+  let lista = [];
+  if (rCsv.status === 'fulfilled') {
+    try { lista = procesarProductosYVariantes(rCsv.value.split('\n')); } catch (e) { console.error(e); }
+  } else { console.warn('CSV no disponible', rCsv.reason); }
+  if (!lista.length) lista = productosDesdeApi();   // respaldo
+
+  if (!lista.length) {
     document.getElementById('loading').style.display = 'none';
     document.getElementById('errorBox').style.display = 'block';
     return;
   }
-  PRODUCTOS = procesarProductosYVariantes(rCsv.value.split('\n'));
+  PRODUCTOS = lista;
   document.getElementById('totalProductos').textContent = PRODUCTOS.filter(p => p.cantTotal > 0).length;
   document.getElementById('loading').style.display = 'none';
   renderGrid();
